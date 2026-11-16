@@ -175,8 +175,11 @@ wipe('ghtest-a', 'ghtest-b', 'ghtest-c')
     db.includes('const tmp = `${file}.${process.pid}.tmp`') && /writeFileSync\(tmp, bytes\)/.test(db) && /else renameSync\(tmp, file\)/.test(db))
   ok('…and what is open must be what was downloaded', /PRAGMA page_count/.test(db) && /seen !== cleanPages/.test(db))
   ok('a copy with no users is never seeded over stored data', /heldData\?\.\(\)\) throw new Error\('refusing to seed/.test(db))
+  // the demo repository has no deploy.sh (it deploys nowhere); the pin applies where there is one
+  if (existsSync(REPO + '/deploy.sh')) {
   const sh = readFileSync(REPO + '/deploy.sh', 'utf8')
   ok('the deploy starts exactly one copy', sh.includes('pm2 delete marketing-dashboard') && sh.indexOf('pm2 delete marketing-dashboard') < sh.indexOf('pm2 startOrReload'))
+  }
 }
 
 // === 1. Very first boot ever: branch created, seed uploaded ===

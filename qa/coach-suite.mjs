@@ -1090,8 +1090,9 @@ ok('the Coach’s words, in all three languages',
   && said('You said you can’t', 'Вы отказались', 'Siz rad etdingiz'))
 
 // The description of the look is kept true.
-const guide = src('CLAUDE.md')
-ok('CLAUDE.md describes the Coach look and names its parts', /## The Coach look/.test(guide) && /lib\/coach\.js/.test(guide) && /CoachTask/.test(guide) && /qa\/coach-suite\.mjs/.test(guide))
+// the demo repository ships without CLAUDE.md (the working notes stay with the team's repository)
+const guide = existsSync(ROOT + '/CLAUDE.md') ? src('CLAUDE.md') : null
+if (guide) ok('CLAUDE.md describes the Coach look and names its parts', /## The Coach look/.test(guide) && /lib\/coach\.js/.test(guide) && /CoachTask/.test(guide) && /qa\/coach-suite\.mjs/.test(guide))
 ok('the deploy gate runs this suite', /run coach-suite/.test(src('qa/ci.sh')))
 
 // Round 20 (3 Nov 2026): the brief is changed where it is read, and Edit is the

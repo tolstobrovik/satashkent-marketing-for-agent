@@ -242,8 +242,9 @@ const lib = src('client/src/lib/driveUpload.js')
 ok('the browser feeds Google itself, and goes the long way round only if it must', /x\.upload\.onprogress/.test(lib) && /\/api\/drive\/uploads\/piece/.test(lib) && /\/api\/drive\/uploads\/status/.test(lib))
 const drive = src('server/drive.js')
 ok('the app writes with drive.file and never asks for the whole Drive to write in', /auth\/drive\.file'/.test(drive) && /auth\/drive\.readonly'/.test(drive) && !/auth\/drive'/.test(drive))
-const deploy = src('.github/workflows/deploy.yml')
-ok('the deploy carries the app\'s identity and never a user\'s key',
+// the demo repository has no deploy workflow (it deploys nowhere); the pin applies where there is one
+const deploy = existsSync(join(ROOT, '.github/workflows/deploy.yml')) ? src('.github/workflows/deploy.yml') : null
+if (deploy) ok('the deploy carries the app\'s identity and never a user\'s key',
   /GOOGLE_CLIENT_ID=\$GOOGLE_ID/.test(deploy) && /GOOGLE_CLIENT_SECRET=\$GOOGLE_SECRET/.test(deploy) && !/REFRESH/i.test(deploy))
 ok('Advanced settings has the Google Drive row, and the sign-in comes back to it',
   /<DriveRow st=\{drive\} \/>/.test(src('client/src/pages/Settings.jsx')) && /drive: '\/admin'/.test(src('client/src/pages/Settings.jsx')) && /get\('drive'\)/.test(src('client/src/pages/Settings.jsx')))
