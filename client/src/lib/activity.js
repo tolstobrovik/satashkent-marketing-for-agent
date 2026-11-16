@@ -35,9 +35,12 @@ export function activityLine(a) {
   // Paperwork reads as an act, not a field change: "attached ТЗ.docx".
   if (f === 'document') return a.new_value ? tx('attached {file}', { file: a.new_value }) : tx('removed {file}', { file: a.old_value })
   const w = WORDS[f] ? tx(WORDS[f]) : f
+  // a stage's name is a phrase of the board (Idea, To shoot, Editing, Ready, Published): read in the reader's language,
+  // like everywhere else it is drawn (the i18n gate, 16 Nov 2026: "Ready → Editing" on a Russian screen)
+  const val = (v) => (f === 'stage' && v != null ? tx(String(v)) : v)
   // a long text: its line may hold the version before (to copy from, in the task's History) — never quoted here
   if (a.old_value == null && a.new_value == null || ['description', 'script', 'tz'].includes(f)) return tx('updated the {what}', { what: w })
-  if (a.old_value == null) return tx('set the {what} to {to}', { what: w, to: a.new_value })
-  if (a.new_value == null) return tx('cleared the {what} (was {was})', { what: w, was: a.old_value })
-  return tx('changed the {what}: {was} → {to}', { what: w, was: a.old_value, to: a.new_value })
+  if (a.old_value == null) return tx('set the {what} to {to}', { what: w, to: val(a.new_value) })
+  if (a.new_value == null) return tx('cleared the {what} (was {was})', { what: w, was: val(a.old_value) })
+  return tx('changed the {what}: {was} → {to}', { what: w, was: val(a.old_value), to: val(a.new_value) })
 }

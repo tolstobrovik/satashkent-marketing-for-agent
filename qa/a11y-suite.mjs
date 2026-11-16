@@ -74,7 +74,7 @@ for (const u of PEOPLE) {
     await page.locator('.co-panel').waitFor({ timeout: 5000 }).catch(() => {})
     await settle(page); await axe(page, `${u} task window`)
     // Task 7 (task-window-tz.md): no Edit form — a long text opens in place; axe reads the open box.
-    const longBox = page.locator('.co-panel .tw-rv-long').first()
+    const longBox = page.locator('.co-panel .tw-rv-long:visible').first()   // the window folds some of its parts: the first box on screen, not the first in the DOM
     if (await longBox.count()) {
       await longBox.click({ timeout: 4000 }).catch(() => {})
       await page.locator('.co-panel .tw-long-in').waitFor({ timeout: 5000 }).catch(() => {})
@@ -151,7 +151,7 @@ ok('axe finds nothing serious or critical on the key screens', bad.length === 0,
       (await page.locator('.co-panel .tw-menu').count()) === 0 && (await page.locator('.co-panel').count()) === 1
       && await page.evaluate(() => !!document.activeElement?.matches('.tw-chipb')))
   } else console.log('· this account may not change the first task\'s kind; the menu over the window is not walked')
-  const longBox = page.locator('.co-panel .tw-rv-long').first()
+  const longBox = page.locator('.co-panel .tw-rv-long:visible').first()   // the window folds some of its parts: the first box on screen, not the first in the DOM
   if (await longBox.count()) {
     await longBox.click(); await page.locator('.co-panel .tw-long-in').waitFor({ timeout: 3000 })
     await page.keyboard.press('Escape'); await page.waitForTimeout(400)
