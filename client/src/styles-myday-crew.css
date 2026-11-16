@@ -1,0 +1,127 @@
+/* My Day round 1 (myday-tz §2.1.4) — the crew's screen (CoachCrewDay.jsx)
+   Only what the crew's day adds to the shared My Day section at the end of
+   styles.css. Every rule is under html[data-look="coach"] .co-myday and wins
+   there by specificity, never by the order the files load in. Tokens only;
+   the 4/8/16/24 scale. */
+
+/* ---- Now and the square: 2fr / 1fr, one height on a desk, 16 apart ---- */
+html[data-look="coach"] .co-myday .co-cd .co-nn { grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: var(--sp-4); }
+@media (max-width: 860px) {
+  html[data-look="coach"] .co-myday .co-cd .co-nn { grid-template-columns: minmax(0, 1fr); }
+}
+/* The after-line: what the press does, then (when a row was brought in) what comes after it — one line each. */
+html[data-look="coach"] .co-myday .co-cd .co-here-ln { display: grid; gap: var(--sp-1); }
+html[data-look="coach"] .co-myday .co-cd .co-here-ln > span { display: block; }
+html[data-look="coach"] .co-myday .co-cd .co-here-ln .co-link { display: inline; min-height: 0; padding: 0; font: inherit; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+/* The line of stops: on a desk a stop's who-and-day wraps instead of an ellipsis (R18). A clamp
+   at two lines still cut the day ("Otabek · / Sun 11 Oc…"), so the words wrap whole, at
+   spaces; the lit stop's are never cut at all (the shared rule). */
+html[data-look="coach"] .co-myday .co-cd .co-here .co-line-top .co-line-s:not(.is-on) .co-line-txt :is(b, small) {
+  display: block; overflow: visible; white-space: normal; text-overflow: clip; overflow-wrap: break-word;
+}
+/* With little room (a phone, a narrow card) the lit stop's words would stand
+   in a column a few letters wide, four lines tall, saying what the sentence
+   right under the line says whole ("To shoot · You · Wed 7 Oct, 10:00–11:00").
+   There they are kept for the reader only, like the other stops' words. */
+@container cocap (max-width: 600px) {
+  html[data-look="coach"] .co-myday .co-cd .co-cap-said .co-line-top .co-line-s.is-on { flex: 0 0 auto; }
+  html[data-look="coach"] .co-myday .co-cd .co-cap-said .co-line-top .co-line-s.is-on .co-line-txt {
+    display: grid; position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+}
+/* On a phone the hero's buttons are full width, stacked. */
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-cd .co-here .co-btns { display: grid; grid-template-columns: minmax(0, 1fr); }
+  html[data-look="coach"] .co-myday .co-cd .co-here .co-btns > .co-btn { width: 100%; justify-content: center; }
+}
+
+/* An empty square shrinks to its words: no held height, nothing scrolls inside. */
+html[data-look="coach"] .co-myday .co-cd .co-sq.is-empty { min-height: 0; align-self: start; }
+html[data-look="coach"] .co-myday .co-cd .co-sq.is-empty > .co-sq-in { position: static; inset: auto; overflow: visible; padding: var(--sp-4) var(--sp-2); }
+html[data-look="coach"] .co-myday .co-cd .co-sq.is-empty .co-sq-next { margin-top: 0; padding-top: var(--sp-1); }
+html[data-look="coach"] .co-myday .co-cd .co-sq-next { overflow-wrap: anywhere; }
+
+/* ---- the bands: a card each; a band with rows keeps its tint, an empty one is the surface ---- */
+html[data-look="coach"] .co-myday .co-cd .co-cols { gap: var(--sp-4); }
+html[data-look="coach"] .co-myday .co-cd .co-band {
+  min-width: 0; margin: 0; padding: var(--sp-2) 0; border-radius: var(--radius);
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline);
+}
+html[data-look="coach"] .co-myday .co-cd .co-cols > .co-band-late:not(.is-empty) { background: var(--st-late-bg); box-shadow: none; }
+html[data-look="coach"] .co-myday .co-cd .co-cols > .co-band-soon:not(.is-empty) { background: var(--st-ready-bg); box-shadow: none; }
+/* Carried over keeps last month's dashed rule; the padding is the card's. */
+html[data-look="coach"] .co-myday .co-cd .co-band.co-band-carried { padding: var(--sp-2) 0; box-shadow: none; }
+/* On a tint the quiet words are the second ink, so they keep 4.5:1 there. */
+html[data-look="coach"] .co-myday .co-cd .co-band:not(.is-empty):is(.co-band-late, .co-band-soon, .co-band-carried) :is(h2.co-sec-h > span, .co-sec-none) { color: var(--ink-2); }
+html[data-look="coach"] .co-myday .co-cd .co-band:not(.is-empty):is(.co-band-late, .co-band-soon, .co-band-carried) ul.co-rows > li.co-row > .co-row-b > :is(.co-row-f, .co-row-f2) { color: var(--ink-2); }
+html[data-look="coach"] .co-myday .co-cd .co-band:not(.is-empty):is(.co-band-late, .co-band-soon, .co-band-carried) ul.co-rows > li.co-row + li.co-row::before { background: var(--hairline-strong); }
+/* "{n} above" sits after the band's own count, in the count's voice. */
+html[data-look="coach"] .co-myday .co-cd h2.co-sec-h > .co-above { display: inline; }
+/* A row drawn in a band: the hover and press grounds stay inside the card's corners. */
+html[data-look="coach"] .co-myday .co-cd .co-band ul.co-rows > li.co-row:last-child { border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+
+/* ---- a booking question: its Yes and No under the words, never squeezing them ----
+   In a band a third of the page wide the title, "Can you? Sat 14 Nov,
+   15:00–16:00 · for Sardor" and two buttons do not fit on one line; the
+   words come whole and the answers sit under them, on the text's x. */
+html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask { grid-template-columns: minmax(0, 1fr); grid-template-areas: "b" "r"; row-gap: var(--sp-2); }
+html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask.has-tl { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "tl b" ". r"; }
+html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask > .co-row-r { justify-content: flex-start; flex-wrap: wrap; }
+html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask > .co-row-b > .co-row-f { white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask.has-tl { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tl" "b" "r"; }
+}
+/* In a band a third of the page wide, the line of stops is a line above the
+   title (the phone's arrangement), so the title keeps the width; the badge
+   stays on the card's right x. */
+html[data-look="coach"] .co-myday .co-cd .co-cols > .co-band ul.co-rows > li.co-row.has-tl { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tl r" "b r"; }
+html[data-look="coach"] .co-myday .co-cd .co-cols > .co-band ul.co-rows > li.co-row.ask.has-tl { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tl" "b" "r"; }
+
+/* ---- Waiting for others: open, every row, its h2 in the summary (the fold's shape) ---- */
+html[data-look="coach"] .co-myday .co-cd details.co-parked { min-width: 0; margin: 0; padding: 0; border-radius: var(--radius); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
+html[data-look="coach"] .co-myday .co-cd details.co-parked[open] { padding-bottom: var(--sp-2); }
+html[data-look="coach"] .co-myday .co-cd details.co-parked > summary {
+  display: flex; align-items: center; gap: var(--sp-2); min-height: 44px; margin: 0; padding: 0 var(--sp-4) 0 0;
+  list-style: none; cursor: pointer; border-radius: var(--radius); font: inherit;
+}
+html[data-look="coach"] .co-myday .co-cd details.co-parked > summary::-webkit-details-marker { display: none; }
+html[data-look="coach"] .co-myday .co-cd details.co-parked > summary > h2.co-sec-h { flex: 1 1 auto; min-width: 0; }
+html[data-look="coach"] .co-myday .co-cd details.co-parked > summary > .co-fold-c { flex: none; color: var(--ink-2); transition: transform 0.2s var(--ease-out); }
+html[data-look="coach"] .co-myday .co-cd details.co-parked[open] > summary > .co-fold-c { transform: rotate(180deg); }
+html[data-look="coach"] .co-myday .co-cd details.co-parked > summary:focus-visible { outline-offset: -2px; }
+
+/* ---- the designer's wall: a card with its h2, the frames on the text's x ---- */
+html[data-look="coach"] .co-myday .co-cd .co-wall-sec { min-width: 0; padding: var(--sp-2) 0 var(--sp-4); border-radius: var(--radius); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
+html[data-look="coach"] .co-myday .co-cd .co-wall-sec > .co-wall { gap: var(--sp-4); padding: var(--sp-2) var(--sp-4) 0; }
+html[data-look="coach"] .co-myday .co-cd .co-wall-it { min-height: 44px; }
+html[data-look="coach"] .co-myday .co-cd .co-wall-it:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+html[data-look="coach"] .co-myday .co-cd .co-wall-words { padding: var(--sp-2); }
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-cd .co-wall-it,
+  html[data-look="coach"] .co-myday .co-cd .co-wall-it:has(.co-frame-wide) { width: calc(50% - var(--sp-2)); }
+}
+
+/* ---- motion: what moves, does not under reduce ---- */
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="coach"] .co-myday .co-cd details.co-parked > summary > .co-fold-c { transition: none; }
+}
+
+/* ---- the card's title is a 44 px target under a finger AND at 700 px and under (§2.5) ----
+   The shared rule has only the (pointer: coarse) arm, so a one-line title
+   on a phone that reports a fine pointer was 26 tall. */
+@media (pointer: coarse), (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-cd .co-here h2 > button { min-height: 44px; }
+}
+
+/* A booking question's row: Yes and No sit under the words, so the row's door
+   (and its ring) is the words alone — not a box drawn around the answers too. */
+html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask > .co-row-b { position: relative; }
+/* …so that door is a 44 px target of its own under a finger and at 700 px and under
+   (title and grey line alone measured 38). */
+@media (pointer: coarse), (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-cd ul.co-rows > li.co-row.ask > .co-row-b { min-height: 44px; }
+}
+/* "Not now" on a picked card: a 44 px target under a finger and at 700 px and under. */
+@media (pointer: coarse), (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-cd .co-here .co-here-x { min-height: 44px; margin-block: calc(-1 * var(--sp-2)); }
+}

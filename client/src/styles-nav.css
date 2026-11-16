@@ -1,0 +1,620 @@
+/* ============================================================
+   The menus of the Coach look (components/CoachNav.jsx), November 2026.
+   Round 3 (design-variants/sidebar-tz.md): the desk column is three zones —
+   the head (logo, the person, My Day · Calendar) and the foot (the settings)
+   stand still, the channels between them are the one scrolling region with
+   a fade only where there is more. White cards on the --soft ground in both
+   themes (raised to --surface-2 at night, never a ring); 44 px rows, a 30 px
+   tile in front of every name, no arrow on a row and no line between rows —
+   the one disclosure is a group's header. Ruby means one thing: the chosen
+   row; what is late is a tonal pill. Folded, a 56 px rail of 40 px tiles.
+   The phone is direction D: a 44 px top bar, a tab bar of five, two sheets.
+   Every colour is a token of styles.css or a mix of two of them — no hex.
+   Every class starts co-nv. Only html[data-look="coach"] ever draws this.
+   ============================================================ */
+@property --nv-fade { syntax: '<number>'; inherits: false; initial-value: 0; }
+.co-nv {
+  --nv-ground: var(--soft);                                              /* the column's ground (the brand suite's "neutral") */
+  --nv-card: var(--surface);                                             /* a card on it */
+  --nv-hover: color-mix(in srgb, var(--near-black) 5%, var(--nv-card));
+  --nv-press: color-mix(in srgb, var(--near-black) 10%, var(--nv-card));
+  --nv-hover-g: color-mix(in srgb, var(--near-black) 4%, var(--nv-ground));   /* a flat row on the ground */
+  --nv-press-g: color-mix(in srgb, var(--near-black) 8%, var(--nv-ground));
+  --nv-img-edge: color-mix(in srgb, var(--near-black) 10%, transparent);
+  --nv-late-bg: var(--primary-soft); --nv-late-ink: var(--primary-ink);  /* the late pill: tonal */
+  --nv-sw-off: var(--muted);                                             /* --hairline-strong is 2.0:1 on the card — under 3:1 */
+  --nv-row-h: 44px; --nv-card-r: var(--radius-xs); --nv-tile-r: 7px; --nv-sel-r: 6px;
+  /* Round 6, the spacing rule: one x for every label, one x for every right-hand mark. A row is 16 · tile 30 · 12 · label,
+     so a header's label starts at 58 px. The right-hand marks end 16 px in, measured on their ink: a lucide glyph is drawn
+     inside its box, so each is moved by its own inset — a 16 px chevron-down in its 24 px box ends 7.33 px in (path to
+     x 18 of 24, plus half its stroke), an 18 px chevron turned right 9 px in, and the 18 px "…" in its 28 px button 7.34 px. */
+  --nv-label-x: calc(var(--sp-4) + 30px + var(--sp-3));
+  --nv-chev-open: 7.33px; --nv-chev-fold: 9px;
+  --nv-more: 28px; --nv-more-r: calc(var(--sp-4) - 7.34px);
+}
+[data-theme="dark"] .co-nv {
+  /* At night --surface is 1.05:1 on --soft: the card is raised to --surface-2 (1.35:1), never drawn with a line. */
+  --nv-card: var(--surface-2);
+  /* the late pill's night digits: --primary-ink is 4.25:1 on the night --primary-soft, and the ТЗ's fallback (--brand-600
+     on --surface-2) 3.9:1; --on-primary-soft — the house's ink on tonal ruby — clears 4.5:1 */
+  --nv-late-ink: var(--on-primary-soft);
+  --nv-hover: color-mix(in srgb, var(--white) 6%, var(--nv-card));
+  --nv-press: color-mix(in srgb, var(--white) 11%, var(--nv-card));
+  --nv-hover-g: color-mix(in srgb, var(--white) 6%, var(--nv-ground));
+  --nv-press-g: color-mix(in srgb, var(--white) 11%, var(--nv-ground));
+  --nv-img-edge: color-mix(in srgb, var(--white) 10%, transparent);
+}
+
+/* ---- the column: one scrolling list; only the logo row stays put (its own selector: the look's `.sidebar` keeps --soft for the brand suite) ---- */
+.layout .sidebar.co-sb.co-nv-side { width: 320px; padding: 0; gap: 0; background: var(--soft); color: var(--ink); border-right: 1px solid var(--hairline); overflow: hidden; }
+.co-nv-col {
+  display: flex; flex-direction: column; gap: var(--sp-4); height: 100%; min-height: 0; padding: 0 var(--sp-4);
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scroll-padding-block: 72px 16px;
+  background: var(--nv-ground);
+  /* the scroll-edge fade under the sticky logo row (56 px): a static mask, its strength --nv-fade (0 → 1 once scrolled, 120 ms) */
+  -webkit-mask-image: linear-gradient(to bottom, black 56px, rgb(0 0 0 / calc(1 - var(--nv-fade))) 56px, black 80px);
+  mask-image: linear-gradient(to bottom, black 56px, rgb(0 0 0 / calc(1 - var(--nv-fade))) 56px, black 80px);
+  --nv-fade: 0; transition: --nv-fade 120ms ease;
+}
+.co-nv-col.is-scrolled { --nv-fade: 1; }
+.co-nv-col > * { flex: none; }
+.co-nv-nav { display: flex; flex-direction: column; gap: var(--sp-3); }
+.co-nv-col > .co-nv-nav { gap: var(--sp-4); }   /* the column: 16 px between every card and group */
+.co-nv-days { display: grid; gap: var(--sp-2); }   /* My Day and Calendar: a card each, 8 px apart */
+/* 16 px under the last card, inside the scroll — the same as over the logo row (a scroller's own bottom padding is not counted in a flex column) */
+.co-nv-col > .co-nv-nav { flex: none; min-height: auto; padding-bottom: var(--sp-4); }   /* flex: none — the look's .co-sb-nav (styles.css) would shrink it to the window and leave its rows overflowing it */
+.co-nv-nav > * { flex: none; }
+.co-nv-top { position: sticky; top: 0; z-index: 3; box-sizing: content-box; display: flex; align-items: center; gap: var(--sp-2); height: 40px; margin: 0 calc(-1 * var(--sp-4)); background: var(--nv-ground);
+  /* 16 px over it, as under the last card; the mark's left edge on the tiles' x (the card's 16 + the row's 16); the menu glyph's
+     ink on the counts' x (the button is 40 px, its 20 px glyph's ink ends 12.6 px in) */
+  padding: var(--sp-4) calc(var(--sp-8) - 12.6px) 0 var(--sp-8); }
+.co-nv-top .logo-link { display: flex; align-items: center; height: 40px; border-radius: var(--radius-xs); }
+.co-nv-top .co-nv-foldbtn { margin-inline-start: auto; }
+.co-nv-top .logo-lockup { padding: 0; }
+/* The lockup without its "College Prep Community" line: at this size the line is six pixels tall and blurs.
+   The artwork is not cut or redrawn — the type layer is clipped below the wordmark (its rows 0–55 of 96;
+   the line is rows 62–85 of l2-type.png). */
+.co-nv-top .brand-layer + .brand-layer { clip-path: inset(0 0 41.667% 0); transform: translateY(19.792%); }
+.co-nv-ib { display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-2); cursor: pointer; transition: scale 150ms var(--ease-out); }
+.co-nv-ib:not(:disabled):active, .co-nv-ri:active { scale: .96; }
+
+/* ---- a card: a raised surface on the ground, both themes; no ring ---- */
+.co-nv-card { position: relative; background: var(--nv-card); border-radius: var(--nv-card-r); overflow: clip; }
+/* the one selection pill of a card: CoachNav's Card places it on the chosen row (transform) and moves it by FLIP, 200 ms */
+.co-nv-ind { position: absolute; left: 0; right: 0; top: 0; height: var(--nv-row-h); border-radius: var(--nv-sel-r); background: var(--fill-press); opacity: 0; pointer-events: none; }
+[data-theme="dark"] .co-nv-ind { box-shadow: inset 0 0 0 1px var(--primary-ink); }   /* at night the fill is 2.5:1 on the card: its ring is the edge */
+.co-nv-card:has(.co-nv-ch.lifted) .co-nv-ind { opacity: 0 !important; }   /* a lifted chosen row carries its own fill */
+
+/* ---- a row: its tile and its name; no arrow, no line under it ---- */
+.co-nv-row {
+  position: relative; isolation: isolate; display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: var(--nv-row-h); padding: 0 var(--sp-4);
+  border: 0; background: none; color: var(--ink); font: inherit; font-size: var(--fs-md); font-weight: 500; line-height: 1.3; letter-spacing: 0; text-align: left; text-decoration: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.co-nv-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.co-nv-v { flex: none; color: var(--muted); font-size: var(--fs-md); font-weight: 400; }
+.co-nv-row:active { background: var(--nv-press); }
+.co-nv-row:focus-visible, .co-nv-fold:focus-visible, .co-nv-ib:focus-visible, .co-nv-ri:focus-visible, .co-nv-tab:focus-visible, .co-nv-top .logo-link:focus-visible { outline: 2px solid var(--ring); outline-offset: -4px; border-radius: var(--nv-sel-r); }
+.co-nv-ib:focus-visible, .co-nv-tab:focus-visible, .co-nv-ri:focus-visible { outline-offset: -2px; border-radius: var(--radius-xs); }
+/* The chosen row: the ruby fill, its corners --nv-sel-r (6 px) — the card's own radius, so at the card's top and bottom
+   the two are one curve (concentric: no inset, outer = inner). */
+.co-nv-row.on, .co-nv-row.on:active { background: var(--fill-press); color: var(--on-ruby); font-weight: 600; border-radius: var(--nv-sel-r); }
+/* in a card the fill is the card's pill (it moves); the row only changes its ink and weight — no transition */
+.co-nv-card .co-nv-row.on, .co-nv-card .co-nv-row.on:active { background: transparent; }
+/* a ruby ring on the ruby fill would not show: the chosen row's (and the rail tile's) focus ring is the fill's own ink */
+.co-nv-row.on:focus-visible, .co-nv-ri.on:focus-visible { outline-color: var(--on-ruby); }
+/* At night the fill is 2.5:1 on its ground (its text is 5:1): a ring in ruby's night ink marks the edge (in a card, on the pill). */
+[data-theme="dark"] .co-nv-row.on:not(.co-nv-card .co-nv-row) { box-shadow: inset 0 0 0 1px var(--primary-ink); }
+.co-nv-row.on .co-nv-v { color: inherit; }
+.co-nv-row.on .co-nv-tile { background: color-mix(in srgb, var(--on-ruby) 22%, transparent); color: var(--on-ruby); }
+.co-nv-row.on .co-nv-tile .co-mark > .co-flag { box-shadow: 0 0 0 1.5px var(--fill-press); }
+.co-nv-row.on .co-nv-cnt.late, .co-nv-row.on .co-nv-cnt.q { background: none; box-shadow: inset 0 0 0 1px var(--on-ruby); color: var(--on-ruby); }
+/* hover only where a pointer hovers: on a touch screen it would stay lit after the tap */
+/* the press is instant (pointer-down); the hover eases in 120 ms where a fine pointer hovers */
+@media (hover: hover) and (pointer: fine) {
+  .co-nv-row, .co-nv-fold, .co-nv-ib, .co-nv-ri { transition: background-color 120ms ease; }
+  .co-nv-ib, .co-nv-ri { transition: background-color 120ms ease, scale 150ms var(--ease-out); }
+  .co-nv-row:hover { background: var(--nv-hover); }
+  .co-nv-row.on:hover { background: var(--fill-press); }
+  .co-nv-card .co-nv-row.on:hover { background: transparent; }
+  .co-nv-ib:hover, .co-nv-fold:hover, .co-nv-ri:not(.on):hover { background: var(--nv-hover-g); }
+  .co-nv-grp.folded .co-nv-fold:hover { background: var(--nv-hover); }
+  .co-nv-grp.folded .co-nv-fold.on:hover { background: var(--fill-press); }
+  .co-nv-back:hover { background: var(--nv-hover-g); }
+}
+.co-nv-row:active, .co-nv-fold:active { transition: none; }
+
+/* ---- tiles and marks ---- */
+/* by day --light-grey (1.21:1 on white; --surface-2 is 1.13:1 — too faint to be seen); at night the next step up from the card */
+.co-nv-tile { display: inline-grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: var(--nv-tile-r); background: var(--light-grey); color: var(--ink-2); }
+.co-nv-row:active .co-nv-tile, .co-nv-row:focus-visible .co-nv-tile { color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .co-nv-row:not(.on):hover .co-nv-tile, .co-nv-fold:not(.on):hover .co-nv-tile { color: var(--ink); }
+  /* a value on a hovered row steps up too: --muted on the night hover fill is 4.1:1 */
+  .co-nv-row:not(.on):hover .co-nv-v { color: var(--ink-2); }
+}
+[data-theme="dark"] .co-nv-tile { background: color-mix(in srgb, var(--white) 8%, var(--nv-card)); }
+/* the icon carries the weight of the name beside it: 1.5 by a regular name, 2 by the chosen (semibold) one */
+.co-nv-tile svg { stroke-width: 1.75; }   /* one stroke for every tile glyph, chosen or not — a heavier one reads as another icon */
+.co-nv-tile .co-mark { color: inherit; }
+.co-nv-tile .co-mark > .co-flag { box-shadow: 0 0 0 1.5px var(--nv-card); }
+.co-nv .avatar { box-shadow: inset 0 0 0 1px var(--nv-img-edge); }
+
+/* ---- counts: what is late is a tonal pill (the work to act on), "in editing" a quiet ring ---- */
+.co-nv-cnt { display: inline-grid; grid-auto-flow: column; align-items: center; gap: 3px; place-content: center; min-width: 20px; height: 20px; padding: 1px 7px 0; flex: none; border-radius: var(--radius-pill); font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0; line-height: 1; }
+.co-nv-cnt.late { background: var(--nv-late-bg); color: var(--nv-late-ink); }
+.co-nv-cnt.q { background: none; box-shadow: inset 0 0 0 1px var(--muted); color: var(--muted); font-weight: 500; }
+
+/* ---- the person: a 40 px face, the name 600, the job in --muted ---- */
+.co-nv-me { min-height: 60px; }
+.co-nv-me .avatar { width: 40px; height: 40px; font-size: var(--fs-sm); }
+.co-nv-who { display: grid; min-width: 0; flex: 1; line-height: 1.3; }
+.co-nv-who b { font-weight: 600; font-size: var(--fs-lg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.co-nv-who small { color: var(--muted); font-size: var(--fs-sm); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.co-nv-row.on .co-nv-who small { color: inherit; }
+/* a ruby face on the ruby row would melt into it: a ring in the row's own ink keeps its edge */
+.co-nv-row.on .avatar, .co-nv-ri.on .avatar { box-shadow: 0 0 0 2px var(--on-ruby); }
+
+/* ---- a group's header: the whole header is the fold button ----
+   Open, a quiet heading over its card (the name, an arrow down). Folded, a row
+   of its own on the same grid as My Day and Calendar: the group's tile, the
+   name in the row's weight, the arrow turned to the right at the end. No
+   height animation — it reflows; the arrow turns and the tile fades in. */
+.co-nv-chans { position: relative; display: flex; flex-direction: column; gap: var(--sp-4); }
+/* 8 px from a header to its card (gone with the card when folded, eased with the fold) */
+.co-nv-grp { display: grid; row-gap: var(--sp-2); transition: row-gap 200ms var(--ease-out); }
+.co-nv-grp.folded { row-gap: 0; }
+.co-nv-hd { position: relative; display: flex; }
+.co-nv-fold { display: flex; align-items: center; gap: var(--sp-2); width: 100%; min-height: 40px; padding: 0 calc(var(--sp-4) - var(--nv-chev-open)) 0 var(--nv-label-x); border: 0; border-radius: var(--radius-xs); background: none; color: var(--muted); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.co-nv-fold:active { background: var(--nv-press-g); }
+.co-nv-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); font-weight: 600; }   /* sentence case: the Coach look has no tracked capitals (S-01) */
+.co-nv-fc { display: inline-grid; place-items: center; width: 24px; height: 24px; flex: none; }
+.co-nv-fc svg { transition: rotate 160ms var(--ease-out); }
+.co-nv-grp.folded .co-nv-fc svg { rotate: -90deg; }
+.co-nv-grp.folded .co-nv-fold { gap: var(--sp-3); min-height: var(--nv-row-h); padding: 0 calc(var(--sp-4) - var(--nv-chev-fold)) 0 var(--sp-4); border-radius: var(--nv-card-r); background: var(--nv-card); color: var(--ink); }
+.co-nv-grp.folded .co-nv-fold:active { background: var(--nv-press); }
+.co-nv-grp.folded .co-nv-fold .co-nv-tile { transition: opacity 150ms var(--ease-out), scale 150ms var(--ease-out); }
+@starting-style { .co-nv-grp.folded .co-nv-fold .co-nv-tile { opacity: 0; scale: .9; } }
+/* folding: grid rows 1fr → 0fr (200 ms); the inner box clips; the wrapper is inert while shut and hidden after */
+.co-nv-fw { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 200ms var(--ease-out); }
+.co-nv-fw.shut { grid-template-rows: 0fr; }
+.co-nv-fi { min-height: 0; overflow: clip; }
+.co-nv-fw[hidden] { display: none; }
+.co-nv-grp.folded .co-nv-n { font-size: var(--fs-md); font-weight: 500; }
+/* folded while it holds the page you are on, the group's row takes the selection (aria-current="location"): the ruby fill,
+   its words and tile in --on-ruby; the fill fades in across the swap with the row inside (160 ms) */
+.co-nv-grp.folded .co-nv-fold.on, .co-nv-grp.folded .co-nv-fold.on:active { background: var(--fill-press); color: var(--on-ruby); transition: background-color 160ms ease, color 160ms ease; }
+.co-nv-grp.folded .co-nv-fold.on .co-nv-n { font-weight: 600; }
+.co-nv-grp.folded .co-nv-fold.on .co-nv-fc { color: inherit; }
+.co-nv-grp.folded .co-nv-fold.on .co-nv-tile { background: color-mix(in srgb, var(--on-ruby) 22%, transparent); color: var(--on-ruby); }
+[data-theme="dark"] .co-nv-grp.folded .co-nv-fold.on { box-shadow: inset 0 0 0 1px var(--primary-ink); }
+.co-nv-fold.on:focus-visible { outline-color: var(--on-ruby); }
+.co-nv-grp.folded .co-nv-fc { color: var(--muted); }
+.co-nv-note { margin: 0; padding: 0 var(--sp-4); font-size: var(--fs-sm); line-height: 1.45; color: var(--muted); white-space: normal; }
+.co-nv-note .co-link { min-height: 32px; padding: 0; color: var(--ink-2); font-size: var(--fs-sm); text-decoration: underline; text-underline-offset: 2px; }
+/* "Back to the board's order": a row of its own, the last of the last card — words in --ink-2, no underline */
+.co-nv-back { color: var(--ink-2); border-radius: var(--nv-sel-r); }
+
+/* ---- a channel's row: the grip on hover and on keyboard focus (a mouse's one drag mark); under a finger none —
+   press-and-hold lifts the row ---- */
+.co-nv-grip { display: none; place-items: center; width: 28px; height: 44px; margin: 0 -10px 0 -4px; flex: none; color: var(--hairline-strong); cursor: grab; touch-action: none; }
+.co-nv-ch:focus-visible .co-nv-grip, .co-nv-ch.lifted .co-nv-grip { display: inline-grid; }
+@media (hover: hover) { .co-nv-ch:hover .co-nv-grip { display: inline-grid; } .co-nv-grip:hover { color: var(--ink-2); } }
+.co-nv-grip:active { cursor: grabbing; }
+.co-nv-row.on .co-nv-grip { color: inherit; }
+@media (pointer: coarse) { .co-nv-ch .co-nv-grip, .co-nv-ch:focus-visible .co-nv-grip, .co-nv-ch.lifted .co-nv-grip { display: none; } }
+/* lifted: it follows the pointer 1:1 (CoachNav sets its translate), a little larger and raised; its card lets it out */
+.co-nv-rows:has(.co-nv-ch.lifted) { overflow: visible; }
+.co-nv-ch.lifted { z-index: 4;   /* over the drop line (3) */  scale: 1.02; box-shadow: var(--shadow); background: var(--nv-card); border-radius: var(--nv-sel-r); }
+.co-nv-ch.lifted.on { background: var(--fill-press); }
+/* under a finger a long press lifts the row: not the link's own menu, not a text selection */
+@media (pointer: coarse) { .co-nv-ch { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; } }
+/* moving without dragging (WCAG 2.5.7): Move up · Move down · Done, under the row; 40 px on a desk, 44 under a finger */
+.co-nv-movebar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3) var(--sp-2) var(--sp-4); background: var(--nv-hover); }
+.co-nv-mv { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 40px; padding: 0 var(--sp-3); border: 0; border-radius: var(--radius-xs); background: var(--nv-card); color: var(--ink); font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.co-nv-mv:disabled { color: var(--muted); cursor: default; }
+.co-nv-mvdone { margin-left: auto; color: var(--primary-ink); }
+.co-nv-mv:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (pointer: coarse) { .co-nv-mv { min-height: 44px; } }
+
+/* ---- Settings: a group card like Management (Language · Dark mode · Sound · Advanced settings) ---- */
+/* a switch row is the whole row; the track 51 × 31 at the row's end, at one x. ON is --ink, the house's chosen fill (round 5:
+   green is a status colour); OFF --muted (--hairline-strong is under 3:1). The knob moves by transform, the track's colour eases (160 ms). */
+/* slim (12 Nov 2026, the owner: "enormous, bigger than the whole thing — much slimmer"); the 44 px row is still what is pressed */
+.co-nv-sw { position: relative; display: inline-block; width: 34px; height: 20px; flex: none; border-radius: 10px; background: var(--nv-sw-off); transition: background-color 160ms ease; }
+.co-nv-sw i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--white); box-shadow: 0 1px 2px color-mix(in srgb, var(--near-black) 25%, transparent); transition: transform 160ms var(--ease-out); }
+.co-nv-swrow[aria-checked="true"] .co-nv-sw { background: var(--ink); }
+[data-theme="dark"] .co-nv-sw i { background: var(--near-black); }
+.co-nv-swrow[aria-checked="true"] .co-nv-sw i { transform: translateX(14px); }
+/* the three languages open in place: grid rows (Collapse), and the rows fade in one after another, 40 ms apart */
+.co-nv-langs { display: grid; }
+.co-nv-fw .co-nv-lang { opacity: 1; transition: opacity 200ms var(--ease-out); }
+.co-nv-fw.shut .co-nv-lang { opacity: 0; transition-duration: 120ms; transition-delay: 0ms; }
+.co-nv-fw:not(.shut) .co-nv-lang:nth-child(2) { transition-delay: 40ms; }
+.co-nv-fw:not(.shut) .co-nv-lang:nth-child(3) { transition-delay: 80ms; }
+.co-nv-lang { padding-left: var(--sp-4); }
+.co-nv-code { display: inline-grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: var(--nv-tile-r); font-size: var(--fs-xs); font-weight: 600; color: var(--muted); }
+.co-nv-lang.picked { font-weight: 600; }
+.co-nv-tick { flex: none; color: var(--primary-ink); }
+
+/* ---- the folded rail: 40 px tiles in a 56 px column, icons alone, no counts ---- */
+.layout.co-railed .sidebar.co-sb.co-nv-side { width: 56px; padding: 0; }   /* the rail draws its own 8 px on every side; the look's railed sidebar (styles.css) would add 12 / 8 px */
+.co-nv-rail { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); height: 100%; min-height: 0; padding: var(--sp-2) 0;   /* 8 px top and bottom, as the 56 px column leaves on each side of a 40 px tile */ background: var(--nv-ground); }
+/* margin 0: the look's older rail rule (.co-railed .co-sb-nav, styles.css, same weight and loaded later) pulls the nav
+   8 px left — hence the doubled class */
+.co-nv.co-nv-rail .co-nv-nav { flex: 1 1 auto; min-height: 0; align-self: stretch; align-items: center; gap: var(--sp-1); margin: 0; overflow-y: auto; overflow-x: hidden; width: 100%; padding: var(--sp-1) 0 var(--sp-6); scrollbar-width: none;
+  /* more tiles below than the window shows (an admin has twenty): the last 24 px fade out as the cue — a mask, never a colour */
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent); mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent); }
+.co-nv-ri { position: relative; display: grid; place-items: center; width: 40px; height: 40px; flex: none; padding: 0; border: 0; border-radius: var(--radius-xs); background: none; color: var(--ink-2); text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: scale 150ms var(--ease-out); }
+.co-nv-ri.on { background: var(--fill-press); color: var(--on-ruby); }
+[data-theme="dark"] .co-nv-ri.on { box-shadow: inset 0 0 0 1px var(--primary-ink); }
+.co-nv-ri .co-mark { color: inherit; }
+.co-nv-ri .co-mark > .co-flag { box-shadow: 0 0 0 1.5px var(--nv-ground); }
+.co-nv-ri.on .co-mark > .co-flag { box-shadow: 0 0 0 1.5px var(--fill-press); }
+.co-nv-ri.brk { margin-top: var(--sp-3); }   /* the groups of the rail are told apart by space, not a rule */
+/* the person: a 32 px face in the 40 px slot — their own colour, never a second selection-sized square */
+.co-nv-rme .avatar { width: 32px; height: 32px; font-size: var(--fs-xs); }
+.co-nv-rmark { cursor: pointer; }
+.co-nv-rfoot { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); flex: none; }
+
+/* ---- sign out, on the profile page: a quiet line of ruby ink at the right of its first card ---- */
+.profile-top:has(.co-nv-pfout) { flex-wrap: wrap; }
+.co-nv-pfout { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; margin-left: auto; padding: 0 var(--sp-3); border: 0; border-radius: var(--radius-xs); background: none; color: var(--primary-ink); font: inherit; font-size: var(--fs-md); font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.co-nv-pfout:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (hover: hover) { .co-nv-pfout:hover { background: var(--primary-soft); } }
+/* at night --primary-ink on --primary-soft is 4.25:1: the hovered words take the house's ink on tonal ruby */
+@media (hover: hover) { [data-theme="dark"] .co-nv-pfout:hover { color: var(--on-primary-soft); } }
+
+/* ---- the bell's count at night (desk and phone): white digits are under 3:1 on the night --critical; near-black reads ---- */
+html[data-look="coach"][data-theme="dark"] .notif-badge { color: var(--near-black); }
+
+/* ---- the profile's door to the first-day tour (under Appearance): a plain row of a button ---- */
+.co-pf-tour { margin-top: var(--sp-4); }
+.co-pf-tourbtn { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; margin: calc(-1 * var(--sp-2)) 0; padding: 0 var(--sp-3); border: 0; border-radius: var(--radius-xs); background: none; color: var(--ink); font: inherit; font-size: var(--fs-md); font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.co-pf-tourbtn > svg { color: var(--ink-2); }
+.co-pf-tourbtn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .co-pf-tourbtn { transition: background-color 120ms ease; } .co-pf-tourbtn:hover { background: var(--surface-2); } }
+
+/* ---- the theme swap: held still for one frame so nothing smears ---- */
+html.theme-swap *, html.theme-swap *::before, html.theme-swap *::after { transition: none !important; }
+/* …except the column's own ground and ink, which ease over 160 ms (and the logo row's fade, 120 ms) */
+html.theme-swap .co-nv-col, .co-nv-col { transition: --nv-fade 120ms ease, background-color 160ms ease, color 160ms ease !important; }
+
+/* ---- the phone: the top bar, the tab bar and the sheets (direction D), under 641 px only ---- */
+.co-nv-tabbar, .co-nv-sheetwrap { display: none; }
+@media (max-width: 640px) {
+  /* The top bar is 44 px of glass with the bell at its right: the page's own date and headline start under it.
+     A page with no headline of its own (Settings, Notes) keeps its title there, on one line. */
+  html[data-look="coach"] .topbar {
+    box-sizing: border-box; height: 44px; min-height: 44px; padding: 0 var(--sp-1) 0 var(--sp-4);
+    background: var(--glass); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  }
+  html[data-look="coach"] .topbar h1 { margin: 0; font-size: var(--fs-md); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  html[data-look="coach"] .topbar > div:has(> h1) { min-width: 0; }
+  /* the bell's count sits inside its 44 px button: in a 44 px bar its usual -3 px would leave the screen */
+  html[data-look="coach"] .topbar .notif-badge { top: 5px; right: 4px; }
+  .co-nv-tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px)); background: var(--glass); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    border-top: 1px solid var(--hairline);
+  }
+  .co-nv-tab { position: relative; display: grid; justify-items: center; align-content: start; gap: 3px; min-height: 44px; min-width: 0; padding: 0 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: var(--fs-xs); font-weight: 500; line-height: 1.1; text-align: center; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  /* a label wraps rather than clips (at 320 a long word may need two lines) */
+  .co-nv-tab > span { max-width: 100%; white-space: normal; overflow-wrap: break-word; }
+  .co-nv-tab > svg { stroke-width: 1.75; }
+  .co-nv-tab.on { color: var(--primary-ink); }
+  .co-nv-tab.on > svg { stroke-width: 2.25; }
+  /* something is late: a 6 px dot at the icon's top-right (the count is in the tab's name) */
+  .co-nv-tabdot { position: absolute; top: 0; left: calc(50% + 8px); width: 6px; height: 6px; border-radius: 50%; background: var(--brand-500); box-shadow: 0 0 0 1.5px var(--glass); }
+  /* Find is in the bar: the top bar keeps the bell. */
+  html[data-look="coach"] .topbar .topbar-find { display: none; }
+  html.co-nv-lock, html.co-nv-lock body { overflow: hidden; }
+
+  .co-nv-sheetwrap { display: block; position: fixed; inset: 0; z-index: 60; }
+  .co-nv-scrim { position: absolute; inset: 0; background: var(--scrim); animation: co-nv-fade 0.3s var(--ease-out) backwards; }
+  .co-nv-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; max-height: 86%; display: flex; flex-direction: column; outline: none;
+    background: var(--soft); color: var(--ink); border-radius: 16px 16px 0 0; box-shadow: var(--shadow-lg);   /* the column's ground: the cards read on it in both themes */
+    animation: co-nv-rise 0.3s var(--ease-out) backwards;
+  }
+  .co-nv-grab { width: 36px; height: 5px; flex: none; margin: 6px auto 10px; border-radius: var(--radius-pill); background: var(--hairline-strong); }
+  .co-nv-sheetbody { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-content: start; padding: 0 var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px)); }
+  /* the sheet's title stays put; only what is under it scrolls. Its first letter on the tiles' x (32 px), 16 px over the first card. */
+  .co-nv-sheet-h { flex: none; margin: 0; padding: 0 var(--sp-4) var(--sp-4) var(--sp-8); font: 700 var(--fs-2xl)/1.15 var(--font-display); }
+  .co-nv-sheetwrap.closing .co-nv-scrim { animation: co-nv-fade 0.18s var(--ease-out) reverse forwards; }
+  .co-nv-sheetwrap.closing .co-nv-sheet { animation: co-nv-rise 0.18s var(--ease-out) reverse forwards; }
+  .co-nv-sheet .co-nv-row { font-size: var(--fs-lg); }
+  .co-nv-sheet .co-nv-v { font-size: var(--fs-lg); }
+  .co-nv-sheet .co-nv-me { min-height: 64px; }
+  .co-nv-sheet .co-nv-fold { min-height: 44px; }
+  .co-nv-sheet .co-nv-grp.folded .co-nv-n { font-size: var(--fs-lg); }
+}
+@keyframes co-nv-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes co-nv-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .co-nv-fc svg, .co-nv-sw, .co-nv-sw i, .co-nv-ib, .co-nv-ri { transition: none; }
+  .co-nv-ib:active, .co-nv-ri:active { scale: none; }
+  .co-nv-sheet { animation-name: co-nv-fade; }
+  .co-nv-grp.folded .co-nv-fold .co-nv-tile, .co-nv-fw, .co-nv-fw .co-nv-lang { transition: none; }
+  .co-nv-sw { transition: background-color 160ms ease; }   /* colour only: the knob jumps */
+  .co-nv-ind, .co-nv-grp.folded .co-nv-fold.on { transition: none !important; }
+  /* a lifted row: no scale, no shadow — it is marked by its fill alone */
+  .co-nv-ch.lifted { scale: none; box-shadow: none; background: var(--nv-hover); }
+}
+
+/* ============================================================
+   Round 6 (design-variants/sidebar-tz-r6.md): the channels are a layout of
+   cards and folders, as on a phone's home screen. A channel standing alone is
+   a card of its own (8 px from the next lone one, like My Day and Calendar);
+   a folder is a group card with a name, an icon and a "…" menu. While a row
+   is dragged: a 2 px ruby line where it would stand alone, a ring on the
+   folder it would go into, and — held still over a row — that row's tile
+   grows into the two marks of the folder it would make.
+   ============================================================ */
+.co-nv-solo + .co-nv-solo { margin-top: calc(var(--sp-2) - var(--sp-4)); }
+.co-nv-card:has(.co-nv-ch.lifted), .co-nv-fi:has(.co-nv-ch.lifted) { overflow: visible; }
+.co-nv-empty { margin: 0; padding: var(--sp-3) var(--sp-4); color: var(--muted); font-size: var(--fs-sm); line-height: 1.45; }
+
+/* a folder's "…": 28 px at the header's end, its ink on the counts' x; the chevron stands left of it */
+.co-nv-grp.has-menu .co-nv-fold { padding-right: calc(var(--nv-more-r) + var(--nv-more) + var(--sp-2) - var(--nv-chev-open));   /* the chevron's ink 8 px left of the button */ }
+.co-nv-grp.has-menu.folded .co-nv-fold { padding-right: calc(var(--nv-more-r) + var(--nv-more) + var(--sp-2) - var(--nv-chev-fold)); }
+.co-nv-more { position: absolute; top: 50%; right: var(--nv-more-r); z-index: 1; display: inline-grid; place-items: center; width: var(--nv-more); height: var(--nv-more); padding: 0; border: 0; border-radius: var(--radius-xs); background: none; color: var(--ink-2); cursor: pointer; translate: 0 -50%; -webkit-tap-highlight-color: transparent; }
+.co-nv-more::after { content: ""; position: absolute; inset: -8px; }   /* a 44 px target under a finger; the glyph stays 28 */
+.co-nv-more:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.co-nv-hd:has(.co-nv-fold.on) .co-nv-more { color: var(--on-ruby); }
+.co-nv-hd:has(.co-nv-fold.on) .co-nv-more:focus-visible { outline-color: var(--on-ruby); }
+@media (hover: hover) and (pointer: fine) {
+  /* on a desk it shows on hover and on focus — the header's one extra mark */
+  .co-nv-more { opacity: 0; transition: opacity 120ms ease, background-color 120ms ease; }
+  .co-nv-hd:hover .co-nv-more, .co-nv-hd:focus-within .co-nv-more, .co-nv-more[aria-expanded="true"] { opacity: 1; }
+  .co-nv-more:hover { background: var(--nv-hover-g); }
+  .co-nv-grp.folded .co-nv-more:hover { background: var(--nv-press); }
+  .co-nv-hd:has(.co-nv-fold.on) .co-nv-more:hover { background: color-mix(in srgb, var(--on-ruby) 18%, transparent); }
+}
+
+/* the folder's tile with no icon chosen: its first two channels' marks, small, side by side */
+.co-nv-tile.co-nv-stack, .co-nv-stack { display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-0); }
+.co-nv-stack-m { display: inline-grid; place-items: center; width: 12px; height: 12px; }
+.co-nv-stack-m svg { width: 12px; height: 12px; }
+.co-nv-stack-m .co-mark > .co-flag { display: none; }   /* the small marks carry no flag: at 12 px it is a speck */
+
+/* the name field: in the header, in place of the name — the folder's tile on the tiles' x, the field on the labels' x */
+.co-nv-fold.co-nv-fold-edit { gap: var(--sp-3); min-height: var(--nv-row-h); padding: 0 var(--sp-4); cursor: default; }
+.co-nv-name {
+  flex: 1; min-width: 0; height: 32px; margin: 0 calc(-1 * var(--sp-2)); padding: 0 var(--sp-2); border: 0; border-radius: var(--nv-sel-r);
+  background: var(--nv-card); box-shadow: inset 0 0 0 1px var(--field-edge); color: var(--ink); font: inherit; font-size: var(--fs-md); font-weight: 500;
+  opacity: 1; transition: opacity 120ms var(--ease-out);
+}
+@starting-style { .co-nv-name { opacity: 0; } }
+.co-nv-name::placeholder { color: var(--muted); }
+.co-nv-name:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+
+/* the menu and the icon picker: a card over the column, under the header */
+.co-nv-pop { position: absolute; top: calc(100% + var(--sp-1)); z-index: 5; padding: var(--sp-1); border-radius: var(--radius-xs); background: var(--surface); box-shadow: var(--shadow-lg); opacity: 1; scale: 1; transition: opacity 160ms var(--ease-out), scale 160ms var(--ease-out); }
+[data-theme="dark"] .co-nv-pop { background: var(--surface-2); box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--hairline); }
+@starting-style { .co-nv-pop { opacity: 0; scale: .96; } }
+.co-nv-menu { right: var(--nv-more-r); min-width: 200px; display: grid; transform-origin: top right; }
+.co-nv-mi { display: flex; align-items: center; min-height: 40px; padding: 0 var(--sp-3); border: 0; border-radius: var(--nv-sel-r); background: none; color: var(--ink); font: inherit; font-size: var(--fs-md); font-weight: 500; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.co-nv-mi:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.co-nv-mi:active { background: var(--nv-press); }
+/* the icon picker: six by four 36 px tiles, grown from the header's left edge — 8 px in, so its first tile (after its own 8 px)
+   stands on the tiles' x */
+.co-nv-icons { left: var(--sp-2); display: grid; grid-template-columns: repeat(6, 36px); gap: var(--sp-1); padding: var(--sp-2); transform-origin: top left; }
+.co-nv-ic { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: var(--nv-tile-r); background: none; color: var(--ink-2); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.co-nv-ic svg { stroke-width: 1.75; }
+.co-nv-ic.on { background: var(--light-grey); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+[data-theme="dark"] .co-nv-ic.on { background: color-mix(in srgb, var(--white) 8%, var(--surface-2)); }
+.co-nv-ic:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.co-nv-ic:active { background: var(--nv-press); }
+@media (hover: hover) and (pointer: fine) {
+  .co-nv-mi, .co-nv-ic { transition: background-color 120ms ease; }
+  .co-nv-mi:hover, .co-nv-ic:not(.on):hover { background: var(--nv-hover); }
+}
+@media (pointer: coarse) { .co-nv-mi { min-height: 44px; } }
+
+/* a drop that would make a folder: the target row is ringed and its tile grows into the two marks (36 px, .96 → 1, 150 ms) —
+   the label does not move (the tile's extra 6 px is taken back by its margins) */
+.co-nv-ch.is-make { outline: 2px solid var(--ring); outline-offset: -2px; border-radius: var(--nv-sel-r); }
+/* …and the lifted row, lying right over that row, turns see-through and a little smaller, so the ring and the two marks show */
+.co-nv-ch.lifted { transition: opacity 120ms ease, scale 120ms var(--ease-out); }
+.co-nv-chans.is-making .co-nv-ch.lifted { opacity: .25; scale: .96; }
+/* a drop line under the lifted row: the row becomes a ghost (half see-through) and the line is drawn over it */
+.co-nv-chans.is-lining .co-nv-ch.lifted, .co-nv-chans.is-lining > .co-nv-grp.is-lifted { opacity: .25; }
+.co-nv-chans.is-lining > .co-nv-dropline { z-index: 5; }
+.co-nv-tile-make { display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-0); width: 36px; height: 36px; margin: 0 calc((30px - 36px) / 2); flex: none; border-radius: 9px; background: var(--light-grey); color: var(--ink); scale: 1; transition: scale 150ms var(--ease-out); }
+.co-nv-tile-make .co-nv-stack-m, .co-nv-tile-make .co-nv-stack-m svg { width: 14px; height: 14px; }
+@starting-style { .co-nv-tile-make { scale: .96; } }
+[data-theme="dark"] .co-nv-tile-make { background: color-mix(in srgb, var(--white) 14%, var(--nv-card)); }
+/* a drop into a folder: the folder's card is ringed (folded, its row) */
+.co-nv-card.is-ringed, .co-nv-grp.folded:has(.co-nv-card.is-ringed) .co-nv-fold { outline: 2px solid var(--ring); outline-offset: -2px; }
+/* on the ruby fill (the row or folded folder that holds your page) a ruby ring would not show: it is the fill's own ink */
+.co-nv-ch.on.is-make, .co-nv-grp.folded:has(.co-nv-card.is-ringed) .co-nv-fold.on { outline-color: var(--on-ruby); }
+/* a drop that stands it alone: a 2 px ruby line across the column at the gap, drawn from the pointer's side (120 ms) */
+.co-nv-dropline { position: absolute; left: 0; right: 0; z-index: 3; height: 2px; border-radius: 1px; background: var(--fill-press); pointer-events: none; animation: co-nv-line 120ms var(--ease-out) backwards; }
+.co-nv-dropline.from-left { transform-origin: left center; }
+.co-nv-dropline.from-right { transform-origin: right center; }
+@keyframes co-nv-line { from { transform: scaleX(0); } }
+/* at night --fill-press is 2.6:1 on the ground (under 3:1 for a mark): the line is the ring's ruby, as the drop rings are */
+[data-theme="dark"] .co-nv-dropline { background: var(--ring); }
+/* the move bar's "New folder with…": the other channels of the list, a row of their own under the bar */
+.co-nv-with { display: flex; flex-wrap: wrap; flex-basis: 100%; gap: var(--sp-2); }
+.co-nv-with .co-nv-mv { font-weight: 500; }
+.co-nv-with .co-mark > .co-flag { display: none; }
+
+/* §8: a folder moves among the cards by its header — a mouse drags it, a finger holds it; lifted, it rises over the column */
+.co-nv-chans > .co-nv-grp > .co-nv-hd { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.co-nv-grp.is-lifted { position: relative; z-index: 4; }
+.co-nv-grp.is-lifted .co-nv-fold { cursor: grabbing; }
+.co-nv-grp.is-lifted .co-nv-card, .co-nv-grp.is-lifted.folded .co-nv-fold { box-shadow: var(--shadow); }
+
+@media (prefers-reduced-motion: reduce) {
+  .co-nv-grp { transition: none; }
+  .co-nv-grp.is-lifted .co-nv-card, .co-nv-grp.is-lifted.folded .co-nv-fold { box-shadow: none; }
+  .co-nv-pop { transition: opacity 160ms ease; scale: none; }
+  .co-nv-tile-make { transition: none; scale: none; }
+  .co-nv-chans.is-making .co-nv-ch.lifted { scale: none; }
+  .co-nv-dropline { animation-name: co-nv-fade; }
+}
+
+/* ==== The calm column (12 Nov 2026, the owner: "it looks too cheap … I like Yandex Business's") ====
+   One quiet surface, not a stack of boxes: rows sit straight on the column's ground (no card behind each),
+   icons are bare line glyphs (no grey tile), groups are told apart by space, and where you are is said by
+   weight, a soft fill and the icon in ruby — never a solid ruby slab, the loudest thing on the screen.
+   Late counts keep their tonal red (ruby's other job). Tokens only. */
+.co-nv { --nv-sel: color-mix(in srgb, var(--ink) 8%, transparent); --nv-label-x: calc(var(--sp-4) + 24px + var(--sp-3)); }   /* labels on one x with the 24 px icons */
+[data-theme="dark"] .co-nv { --nv-sel: color-mix(in srgb, var(--white) 9%, transparent); }
+.co-nv .co-nv-card, [data-theme="dark"] .co-nv .co-nv-card { background: transparent; box-shadow: none; }
+.co-nv-col > .co-nv-nav { gap: var(--sp-6); }                 /* 24 between groups … */
+.co-nv .co-nv-days, .co-nv .co-nv-grp { row-gap: 2px; gap: 2px; } /* … 2 between rows, so a group reads as one */
+.co-nv .co-nv-row { color: var(--ink-2); font-weight: 500; border-radius: var(--radius-sm); }
+.co-nv .co-nv-tile, [data-theme="dark"] .co-nv .co-nv-tile { width: 24px; height: 24px; background: none; color: var(--muted); }
+.co-nv .co-nv-tile svg { width: 20px; height: 20px; }
+@media (hover: hover) { .co-nv .co-nv-row:not(.on):hover { background: var(--nv-sel); color: var(--ink); } }
+.co-nv .co-nv-row:active { background: var(--nv-sel); }
+/* where you are */
+.co-nv .co-nv-ind, [data-theme="dark"] .co-nv .co-nv-ind { background: var(--nv-sel); box-shadow: none; border-radius: var(--radius-sm); }
+.co-nv .co-nv-row.on, .co-nv .co-nv-row.on:active { background: var(--nv-sel); color: var(--ink); font-weight: 600; border-radius: var(--radius-sm); }
+.co-nv .co-nv-card .co-nv-row.on, .co-nv .co-nv-card .co-nv-row.on:active { background: transparent; }   /* the moving pill draws it inside a group */
+.co-nv .co-nv-row.on .co-nv-tile { background: none; color: var(--brand-500); }
+.co-nv .co-nv-row.on .co-nv-tile .co-mark > .co-flag { box-shadow: 0 0 0 1.5px var(--nv-ground); }
+.co-nv .co-nv-row.on:focus-visible { outline-color: var(--ring); }
+.co-nv .co-nv-row.on .co-nv-cnt.late { background: var(--nv-late-bg); box-shadow: none; color: var(--nv-late-ink); }
+.co-nv .co-nv-row.on .co-nv-cnt.q { box-shadow: inset 0 0 0 1px var(--muted); color: var(--muted); }
+.co-nv .co-nv-row.on .avatar { box-shadow: 0 0 0 2px var(--brand-500); }
+/* a group's head, folded or open: a plain row on the ground */
+.co-nv .co-nv-grp.folded .co-nv-fold, [data-theme="dark"] .co-nv .co-nv-grp.folded .co-nv-fold { background: transparent; color: var(--ink-2); border-radius: var(--radius-sm); }
+@media (hover: hover) { .co-nv .co-nv-grp.folded .co-nv-fold:hover { background: var(--nv-sel); } }
+.co-nv .co-nv-grp.folded .co-nv-fold.on, .co-nv .co-nv-grp.folded .co-nv-fold.on:active { background: var(--nv-sel); color: var(--ink); }
+.co-nv .co-nv-grp.folded .co-nv-fold.on:hover { background: var(--nv-sel); }
+.co-nv .co-nv-grp.folded .co-nv-fold.on .co-nv-tile { background: none; color: var(--brand-500); }
+.co-nv .co-nv-grp.folded .co-nv-fold.on:focus-visible { outline-color: var(--ring); }
+/* the person: avatar, name, job — no box */
+.co-nv .co-nv-me { min-height: 56px; }
+/* Break-ui (12 Nov 2026): a long channel name is cut with "…" and its full name on hover; a count never shrinks or wraps. */
+.co-nv .co-nv-cnt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Folded on a desk the menu is gone, not a rail; this is the one way back, at the start of the top bar. */
+.side-toggle.co-side-open { width: 40px; height: 40px; margin-inline-end: var(--sp-2); color: var(--ink-2); border-radius: var(--radius-sm); }
+.side-toggle.co-side-open:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.side-toggle.co-side-open:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ==== Heavier words (12 Nov 2026, the owner: "the fonts are too thin"; picked: medium, brighter) ====
+   Inter 500 in the full ink, not the grey ink-2, at 15 px; the line icons drawn at 2 px and one step darker;
+   where you are 600. The weight comes from the ink and the stroke, never from 700 on every row. */
+.co-nv .co-nv-row, .co-nv .co-nv-grp.folded .co-nv-fold, [data-theme="dark"] .co-nv .co-nv-grp.folded .co-nv-fold { color: var(--ink); font-weight: 500; }
+.co-nv .co-nv-row .co-nv-t, .co-nv .co-nv-fold .co-nv-t { font-weight: inherit; }
+.co-nv .co-nv-tile, [data-theme="dark"] .co-nv .co-nv-tile { color: var(--ink-2); }
+.co-nv .co-nv-tile svg, .co-nv .co-nv-fc svg { stroke-width: 2; }
+.co-nv .co-nv-row.on, .co-nv .co-nv-grp.folded .co-nv-fold.on { font-weight: 600; }
+.co-nv .co-nv-v { color: var(--ink-2); font-weight: 500; }   /* a row's value on the right (English) */
+
+/* Folded: the three lines and the logo at the start of the top bar, on the menu's own x (16 px in), so the eye
+   finds them where it left them. */
+.co-side-home { display: inline-flex; align-items: center; gap: var(--sp-2); flex: none; margin-inline-end: var(--sp-4); }
+.co-side-home .side-toggle.co-side-open { margin: 0; }
+.co-side-home .co-side-logo { display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--sp-1); border-radius: var(--radius-sm); }
+.co-side-home .co-side-logo:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.co-side-home .logo-lockup { padding: 0; }   /* the lockup’s own 8/8/22 padding is the login page’s, not a 40 px bar’s */
+@media (pointer: coarse) { .side-toggle.co-side-open { width: 44px; height: 44px; } .co-side-home .co-side-logo { min-height: 44px; } }
+
+/* ==== 12 Nov 2026, the owner, from the folded menu beside a Yandex business cabinet: "the font a little bolder; fix the
+   spaces — the arrangement of the arrows and everything". The reference gives the rhythm and the weight, never its
+   colours: one pitch of rows, one weight for every name, every right-hand mark on one x. Scoped to the desk column
+   (.co-nv-col): the phone's sheets keep their own rows. ====
+   - Names Inter 600 in the full ink (were 500); where you are 700 — the brand's ceiling, nothing heavier. The person's
+     name 700 too.
+   - A row is 48 px, the glyph 16 px from its words (was 44 and 12); rows of one list 4 px apart, lists 16 px apart.
+   - Every mark at the row's end — a chevron, a count, a value, a switch — ends 16 px in, on its ink. A folder's "…"
+     no longer pushes its chevron 28 px left: it stands LEFT of the chevron (hover and focus on a desk, always under a
+     finger), so the two folders' arrows sit on Management's x.
+   - An open group's header is the same type as a folded one (15/600) in the second ink, 48 px, its chevron turned
+     down on the same x — no longer a 13 px grey caption beside 15 px rows. */
+.co-nv-col {
+  --nv-row-h: 48px;
+  --nv-label-x: calc(var(--sp-4) + 24px + var(--sp-4));   /* 16 · glyph 24 · 16 → the words start 56 px in */
+  --nv-chev-open: 6.75px;                                 /* an 18 px chevron-down in its 24 px box: ink to 18/24 of the glyph plus half the stroke, then the box's 3 */
+  --nv-chev-fold: 9px;                                    /* the same glyph turned right: its tip at 15/24, plus half the stroke, plus the box's 3 */
+}
+.co-nv-col .co-nv-row, .co-nv-col .co-nv-grp.folded .co-nv-fold, [data-theme="dark"] .co-nv-col .co-nv-grp.folded .co-nv-fold { gap: var(--sp-4); font-weight: 600; }
+.co-nv-col .co-nv-row.on, .co-nv-col .co-nv-grp.folded .co-nv-fold.on { font-weight: 700; }
+.co-nv-col .co-nv-who b { font-weight: 700; }
+.co-nv-col .co-nv-v { font-weight: 500; }
+/* one pitch: 4 inside a list, 16 between lists (the person · the day · the channels · Management · Settings) */
+.co-nv-col > .co-nv-nav { gap: var(--sp-4); }
+.co-nv-col .co-nv-days, .co-nv-col .co-nv-grp { row-gap: var(--sp-1); gap: var(--sp-1); }
+.co-nv-col .co-nv-chans { gap: var(--sp-1); }
+.co-nv-col .co-nv-solo + .co-nv-solo { margin-top: 0; }
+/* the group's header: open or folded, one row of the list */
+.co-nv-col .co-nv-fold:not(.co-nv-fold-edit) { min-height: var(--nv-row-h); border-radius: var(--radius-sm); padding: 0 calc(var(--sp-4) - var(--nv-chev-open)) 0 var(--nv-label-x); color: var(--ink-2); }   /* the rename field keeps its own 16 px */
+.co-nv-col .co-nv-fold .co-nv-n { font-size: var(--fs-md); font-weight: 600; }
+.co-nv-col .co-nv-grp.folded .co-nv-fold { padding: 0 calc(var(--sp-4) - var(--nv-chev-fold)) 0 var(--sp-4); }
+.co-nv-col .co-nv-grp.folded .co-nv-fold .co-nv-n { font-weight: inherit; }
+.co-nv-col .co-nv-fc { color: var(--ink-2); }
+.co-nv-col .co-nv-fc svg { width: 18px; height: 18px; }
+@media (hover: hover) { .co-nv-col .co-nv-fold:not(.on):not(.co-nv-fold-edit):hover { background: var(--nv-sel); color: var(--ink); } }
+/* the folder's "…" stands left of the chevron, on the chevron's own line; its words keep clear of it */
+.co-nv-col .co-nv-grp.has-menu .co-nv-fold:not(.co-nv-fold-edit) { padding-right: calc(var(--sp-4) - var(--nv-chev-open)); }
+.co-nv-col .co-nv-grp.has-menu.folded .co-nv-fold { padding-right: calc(var(--sp-4) - var(--nv-chev-fold)); }
+.co-nv-col .co-nv-grp.has-menu .co-nv-fold .co-nv-n { padding-right: calc(var(--nv-more) + var(--sp-2)); }
+.co-nv-col .co-nv-more { right: calc(var(--sp-4) - var(--nv-chev-open) + 24px + var(--sp-2)); }
+.co-nv-col .co-nv-grp.folded .co-nv-more { right: calc(var(--sp-4) - var(--nv-chev-fold) + 24px + var(--sp-2)); }
+/* an open folder is still a group: 16 px above and below it (lone rows and folded folders stay 4 apart). The list's
+   first children are hidden hints, so "first" is read as "nothing drawn before it": an open folder after a card or a
+   folder, and whatever follows an open folder, each take 12 more on top of the 4; two open folders in a row share one 16. */
+.co-nv-col .co-nv-chans > :is(.co-nv-solo, .co-nv-grp) ~ .co-nv-grp:not(.folded),
+.co-nv-col .co-nv-chans > .co-nv-grp:not(.folded) + :is(.co-nv-solo, .co-nv-grp) { margin-top: calc(var(--sp-4) - var(--sp-1)); }
+/* the folder's menu hangs from its "…", which moved left of the chevron */
+.co-nv-col .co-nv-menu { right: calc(var(--sp-4) - var(--nv-chev-open) + 24px + var(--sp-2)); }
+.co-nv-col .co-nv-grp.folded .co-nv-menu { right: calc(var(--sp-4) - var(--nv-chev-fold) + 24px + var(--sp-2)); }
+/* the rename field's words on the labels' x: its tile, then the same 16 px */
+.co-nv-col .co-nv-fold.co-nv-fold-edit { gap: var(--sp-4); }
+
+/* ==== 13 Nov 2026, the owner, from direction B ("macOS source list"): "no lines, and no search for the channels". ====
+   The column draws no line: its right edge goes (the ground's own shift from the page says where it ends). There
+   is no channel search to remove — round 2 took it out; the finder code sleeps in navOrder.js. */
+.layout .sidebar.co-sb.co-nv-side { border-right: 0; }
+
+/* ==== 13 Nov 2026, the owner: "all the buttons and groups bigger and bolder — 60–70 % of the column, not 40; and the
+   three lines must stay where they are when I open and close it". ====
+   - A row is 56 px; the name Inter 700 at 17 px (--fs-lg), the glyph 24 px in a 28 px box, 16 px from the words;
+     every mark at the end scaled with it. The person's name 20 px. A group's header the same type, in the second ink.
+   - The three lines stand FIRST in the logo row, on the x and y the folded top bar draws them at (32, 16), with the
+     logo after them — so a press folds the menu and the next press is on the same spot. */
+.co-nv-col {
+  --nv-row-h: 56px;
+  --nv-label-x: calc(var(--sp-4) + 28px + var(--sp-4));   /* 16 · glyph box 28 · 16 → the words start 60 px in */
+}
+.co-nv-col .co-nv-row, .co-nv-col .co-nv-grp.folded .co-nv-fold, [data-theme="dark"] .co-nv-col .co-nv-grp.folded .co-nv-fold { font-size: var(--fs-lg); font-weight: 700; }
+.co-nv-col .co-nv-row.on, .co-nv-col .co-nv-grp.folded .co-nv-fold.on { font-weight: 700; }
+.co-nv-col .co-nv-fold .co-nv-n { font-size: var(--fs-lg); font-weight: 700; }
+.co-nv-col .co-nv-tile, [data-theme="dark"] .co-nv-col .co-nv-tile { width: 28px; height: 28px; }
+.co-nv-col .co-nv-tile svg { width: 24px; height: 24px; }
+.co-nv-col .co-nv-fc svg { width: 22px; height: 22px; }
+.co-nv-col .co-nv-cnt { min-width: 24px; height: 24px; padding: 1px 8px 0; font-size: var(--fs-sm); }
+.co-nv-col .co-nv-v { font-size: var(--fs-md); }
+.co-nv-col .co-nv-sw { width: 40px; height: 24px; border-radius: 12px; }
+.co-nv-col .co-nv-sw i { width: 20px; height: 20px; }
+.co-nv-col .co-nv-swrow[aria-checked="true"] .co-nv-sw i { transform: translateX(16px); }
+.co-nv-col .co-nv-me { min-height: 64px; }
+.co-nv-col .co-nv-who b { font-size: var(--fs-xl); }
+.co-nv-col .co-nv-who small { font-size: var(--fs-md); }
+.co-nv-col .co-nv-me .avatar { width: 48px; height: 48px; font-size: var(--fs-lg); }
+/* the chevrons of the 22 px glyph: its ink 22/24 · 18/24 → the open one ends 4.6 px in, the turned one 7.75 (plus the box's 1) */
+.co-nv-col { --nv-chev-open: 5.6px; --nv-chev-fold: 8.75px; }
+/* the three lines first, on the folded bar's spot; the logo after them, where the folded bar draws it too */
+/* 13 Nov, later, the owner: the three lines on the RIGHT — at the end of the logo row, open (251 px in), and the
+   folded bar draws its own button on that same x, after the logo, so a press and the next press meet at one spot */
+.co-nv-top .co-nv-foldbtn { order: 0; margin: 0 0 0 auto; }
+.co-nv-top { gap: var(--sp-2); }
+.co-side-home { translate: 0 -2px; width: 259px; }   /* 16 px from the top, as the column's row; 32 → 291 wide, so the button ends where the open one does */
+.co-side-home .co-side-logo { order: -1; }
+.co-side-home .side-toggle.co-side-open { margin-left: auto; }
+
+/* ==== 15 Nov 2026, the owner: a coloured dot marks a channel's twin (no flags); the folder's icon on its header;
+   opening a folded group puts the light on it ==== */
+/* the dots' rules live at the end of styles.css, after the flags' old rules */
+.co-nv-row.on .co-nv-tile .co-mark > .co-flag { box-shadow: 0 0 0 2px var(--fill-press); }
+.co-nv-fold > .co-nv-tile { margin-right: var(--sp-1); }
+.co-nv-col .co-nv-grp, .co-nv-col .co-nv-top, .co-nv-col .co-nv-nav > *, .co-nv-col .co-nv-card { transition: opacity var(--spring-t, 450ms) var(--spring, ease-out), filter var(--spring-t, 450ms) var(--spring, ease-out); }
+.co-nv-col .is-dim { opacity: .35; filter: blur(2px); pointer-events: auto; }
+.co-nv-col.is-spot .is-dim * { pointer-events: none; }   /* a press on the fog is one thing: it closes the folder */
+@media (prefers-reduced-motion: reduce) { .co-nv-col .is-dim { filter: none; } }

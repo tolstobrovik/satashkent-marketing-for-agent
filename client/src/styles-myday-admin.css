@@ -1,0 +1,217 @@
+/* My Day round 1 (myday-tz §2.1.2) — the admin's day: My Day · Team.
+   Imported by components/CoachAdminDay.jsx. Every rule is scoped under
+   html[data-look="coach"] .co-myday, so it wins over the older unscoped
+   .co-ad-* rules of styles.css by specificity, never by load order. The
+   shared row, heads, notes and the start-here card are styles.css's
+   "My Day round 1 (myday-tz) — shared" section. Tokens only, no hex;
+   4/8/16/24 (--sp-1/2/4/6); nothing heavier than 600 here. */
+
+/* ---- the head: the day controls on its right x; under the headline on a phone ---- */
+html[data-look="coach"] .co-myday .co-admin > .co-head { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--sp-4); }
+html[data-look="coach"] .co-myday .co-admin > .co-head > .co-date { grid-column: 1; grid-row: 1; }
+html[data-look="coach"] .co-myday .co-admin > .co-head > .co-title { grid-column: 1; grid-row: 2; min-width: 0; }
+html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 { grid-column: 2; grid-row: 1 / span 2; justify-self: end; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 .icon-btn { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: var(--radius-sm); color: var(--ink-2); }
+html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 .co-ad-today { display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--sp-2); font-size: var(--fs-sm); font-weight: 600; }
+html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 .co-chan-pick { min-height: 32px; margin: 0; max-width: 100%; }
+@media (hover: hover) and (pointer: fine) {
+  html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 .icon-btn:hover { background: var(--soft); color: var(--ink); }
+}
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-admin > .co-head { grid-template-columns: minmax(0, 1fr); }
+  html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 { grid-column: 1; grid-row: 3; justify-self: stretch; }
+  html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 .co-chan-pick { flex: 1 1 auto; min-width: 0; }
+}
+@media (max-width: 700px), (pointer: coarse) {
+  html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 .icon-btn { width: 44px; height: 44px; min-height: 44px; }
+  html[data-look="coach"] .co-myday .co-admin .co-ad-ctl2 :is(.co-ad-today, .co-chan-pick) { min-height: 44px; }
+}
+
+/* ---- the tabs: the menus' ink switch, My Day · Team ----
+   A --surface-2 track, 4 inside; the selected tab is a --surface pill with
+   --ink 600 (never ruby), edged with the field edge so it reads at 3:1 on the
+   track. The pill slides 160 ms; the panels swap at once. */
+html[data-look="coach"] .co-myday .co-ad-tabs {
+  position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; justify-self: start; align-self: start;
+  padding: var(--sp-1); border-radius: var(--radius); background: var(--surface-2);
+}
+html[data-look="coach"] .co-myday .co-ad-tabs > [role="tab"] {
+  position: relative; z-index: 1; min-width: 120px; min-height: 40px; margin: 0; padding: 0 var(--sp-4);
+  border: 0; border-radius: var(--radius-sm); background: none; color: var(--muted);
+  font: 500 var(--fs-sm)/1.2 var(--font); cursor: pointer;
+}
+html[data-look="coach"] .co-myday .co-ad-tabs > [role="tab"][aria-selected="true"] { color: var(--ink); font-weight: 600; }
+html[data-look="coach"] .co-myday .co-ad-tabs > [role="tab"]:focus-visible { outline-offset: -2px; }
+html[data-look="coach"] .co-myday .co-ad-tabs > .co-ad-tabs-pill {
+  position: absolute; z-index: 0; top: var(--sp-1); bottom: var(--sp-1); left: var(--sp-1); width: calc(50% - var(--sp-1));
+  border-radius: var(--radius-sm); background: var(--surface); box-shadow: inset 0 0 0 1px var(--field-edge);
+  transition: transform 0.16s var(--ease-out); pointer-events: none;
+}
+html[data-look="coach"] .co-myday .co-ad-tabs[data-at="team"] > .co-ad-tabs-pill { transform: translateX(100%); }
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-ad-tabs { display: grid; justify-self: stretch; }
+  html[data-look="coach"] .co-myday .co-ad-tabs > [role="tab"] { min-width: 0; }
+}
+@media (max-width: 700px), (pointer: coarse) {
+  html[data-look="coach"] .co-myday .co-ad-tabs > [role="tab"] { min-height: 44px; }
+}
+
+/* ---- the panels: the page's own rhythm, 16 between cards ---- */
+html[data-look="coach"] .co-myday .co-ad-panel { display: grid; gap: var(--sp-4); min-width: 0; }
+html[data-look="coach"] .co-myday .co-ad-panel[hidden] { display: none; }
+html[data-look="coach"] .co-myday .co-ad-panel > *,
+html[data-look="coach"] .co-myday .co-admin > * { margin-block: 0; }
+
+/* ---- My Day: the cards that kept an older class ---- */
+html[data-look="coach"] .co-myday section.co-sec:is(.co-ad-seatless, .co-ad-bands) { margin: 0; padding: var(--sp-2) 0; }
+html[data-look="coach"] .co-myday .co-ad-why { margin: 0; padding: 0 var(--sp-4) var(--sp-2); font-size: var(--fs-sm); line-height: 1.45; color: var(--muted); }
+/* An ask's two answers: on a phone they go under the words, still on the right x. */
+@media (max-width: 520px) {
+  html[data-look="coach"] .co-myday ul.co-rows > li.co-row.co-ad-askrow { grid-template-columns: minmax(0, 1fr); grid-template-areas: "b" "r"; row-gap: var(--sp-2); }
+}
+/* On a phone the grey line of Today and Overdue may take two lines: it carries how late, which an ellipsis would cut. */
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday :is(.co-ad-today2, .co-ad-od2) ul.co-rows > li.co-row > .co-row-b > .co-row-f { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; }
+}
+/* "{n} more are over {d} days late · Review them": the quiet closing line of Overdue. */
+html[data-look="coach"] .co-myday .co-ad-arch { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--sp-1); min-height: 44px; margin: 0; padding: 0 var(--sp-4); font-size: var(--fs-sm); line-height: 1.45; color: var(--muted); }
+html[data-look="coach"] .co-myday .co-ad-arch-b { display: inline-flex; align-items: center; min-height: 32px; padding: 0; border: 0; background: none; color: var(--ink-2); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+@media (max-width: 700px), (pointer: coarse) { html[data-look="coach"] .co-myday .co-ad-arch-b { min-height: 44px; } }
+
+/* ---- Team: "Who does what today" and its filter ---- */
+html[data-look="coach"] .co-myday .co-ad-tt .co-ad-tt-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--sp-4); margin: 0; padding: 0 var(--sp-4) 0 0; }
+html[data-look="coach"] .co-myday .co-ad-tt .co-ad-tt-h > h2 { flex: 1 1 auto; min-width: 0; }
+html[data-look="coach"] .co-myday .co-ad-tt .co-ad-show { flex: 0 0 auto; width: auto; min-height: 32px; margin: 0; max-width: 100%; }
+html[data-look="coach"] .co-myday .co-ad-tt .co-ad-key { margin: 0; padding: 0 var(--sp-4) var(--sp-2); }
+/* Now is ink, not ruby: ruby fills once a page (the start-here primary). */
+html[data-look="coach"] .co-myday .co-ad-tt .co-ad-key i.n { background: var(--ink); }
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-ad-tt .co-ad-tt-h { padding: 0 var(--sp-4) var(--sp-2) 0; }
+  html[data-look="coach"] .co-myday .co-ad-tt .co-ad-show { flex: 1 1 100%; width: auto; min-height: 44px; margin-left: var(--sp-4); max-width: calc(100% - var(--sp-4)); }
+}
+@media (pointer: coarse) { html[data-look="coach"] .co-myday .co-ad-tt .co-ad-show { min-height: 44px; } }
+
+/* ---- the timetable on a desk: a named, focusable scroll region over a table ----
+   The ring is drawn on the frame, which the fade's mask does not touch. */
+html[data-look="coach"] .co-myday .co-ad-frame { position: relative; margin: 0 var(--sp-4) var(--sp-2); border-radius: var(--radius-sm); }
+html[data-look="coach"] .co-myday .co-ad-frame:has(> .co-ad-wrap:focus-visible) { outline: 2px solid var(--ring); outline-offset: 2px; }
+html[data-look="coach"] .co-myday .co-ad-frame > .co-ad-wrap { margin: 0; border-radius: var(--radius-sm); }
+html[data-look="coach"] .co-myday .co-ad-frame > .co-ad-wrap:focus-visible { outline: none; }
+/* The edge fade: only while there is more to the right (a class the scroll sets). */
+html[data-look="coach"] .co-myday .co-ad-frame.more > .co-ad-wrap {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+}
+html[data-look="coach"] .co-myday .co-ad-rg { display: block; }
+html[data-look="coach"] .co-myday .co-admin .co-ad-who { position: sticky; left: 0; z-index: 2; background: var(--surface); }
+html[data-look="coach"] .co-myday .co-admin .co-ad-r.nobody .co-ad-who { background: var(--soft); }
+html[data-look="coach"] .co-myday .co-admin .co-ad-r.nobody { background: var(--soft); }
+/* Now: an ink pill kept inside the track; before the day starts it waits at the left edge, in words. */
+html[data-look="coach"] .co-myday .co-ad-hd .co-ad-nowl { background: var(--ink); color: var(--surface); font-weight: 600; white-space: nowrap; }
+html[data-look="coach"] .co-myday .co-ad-hd .co-ad-nowl.early { left: var(--sp-1); transform: none; }
+html[data-look="coach"] .co-myday .co-ad-hd .co-ad-trk.early { min-height: 52px; }
+html[data-look="coach"] .co-myday .co-ad-hd .co-ad-trk.early > .co-ad-hr { top: 30px; }
+html[data-look="coach"] .co-myday .co-ad-nl { background: var(--ink); }
+html[data-look="coach"] .co-myday .co-ad-nl.early { margin-left: 0; }
+/* "Overdue": how many and the oldest, in words — no colour that turns at three days (R11). */
+html[data-look="coach"] .co-myday button.co-ad-od {
+  display: inline-flex; align-items: center; min-height: 28px; padding: 0 var(--sp-2); border: 0; border-radius: var(--radius-pill);
+  background: var(--track); color: var(--ink); font: 600 var(--fs-sm)/1 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer;
+}
+html[data-look="coach"] .co-myday button.co-ad-od[aria-expanded="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+/* A person's open list, under their row. */
+html[data-look="coach"] .co-myday .co-ad-drw-r { display: block; }
+html[data-look="coach"] .co-myday .co-ad-drw-r > .co-ad-drw { display: block; padding: 0 0 0 170px; background: var(--soft); }
+
+/* ---- the timetable on a phone: a person a row, the day one press away (R04) ---- */
+html[data-look="coach"] .co-myday .co-ad-ppl { display: grid; margin: 0; padding: 0; list-style: none; }
+html[data-look="coach"] .co-myday .co-ad-ppl-i { position: relative; margin: 0; }
+html[data-look="coach"] .co-myday .co-ad-ppl-i + .co-ad-ppl-i::before { content: ""; position: absolute; top: 0; left: var(--sp-4); right: var(--sp-4); height: 1px; background: var(--hairline); }
+html[data-look="coach"] .co-myday .co-ad-ppl-b {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--sp-2); width: 100%; min-height: 44px;
+  margin: 0; padding: var(--sp-2) var(--sp-4); border: 0; border-radius: 0; background: none; color: inherit; font: inherit; text-align: start;
+}
+html[data-look="coach"] .co-myday button.co-ad-ppl-b { cursor: pointer; }
+html[data-look="coach"] .co-myday button.co-ad-ppl-b:focus-visible { outline-offset: -2px; border-radius: var(--radius-sm); }
+html[data-look="coach"] .co-myday .co-ad-ppl-b .avatar,
+html[data-look="coach"] .co-myday .co-ad-ppl-b .co-ad-q { width: 30px; height: 30px; font-size: var(--fs-xs); }
+html[data-look="coach"] .co-myday .co-ad-ppl-t { display: grid; min-width: 0; }
+html[data-look="coach"] .co-myday .co-ad-ppl-t > b { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 500 var(--fs-md)/1.3 var(--font); color: var(--ink); }
+/* The status line wraps rather than cut its hour ("Starts at 0…" at 320). */
+html[data-look="coach"] .co-myday .co-ad-ppl-t > small { font-size: var(--fs-sm); line-height: 1.4; color: var(--muted); }
+html[data-look="coach"] .co-myday .co-ad-ppl-r { display: flex; align-items: center; gap: var(--sp-1); }
+html[data-look="coach"] .co-myday .co-ad-pill {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 var(--sp-2); border-radius: var(--radius-pill);
+  background: var(--track); color: var(--ink); font: 600 var(--fs-xs)/1 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+html[data-look="coach"] .co-myday .co-ad-ppl-c { flex: none; color: var(--ink-2); transition: transform 0.2s var(--ease-out); }
+html[data-look="coach"] .co-myday .co-ad-ppl-b[aria-expanded="true"] .co-ad-ppl-c { transform: rotate(180deg); }
+html[data-look="coach"] .co-myday .co-ad-ppl-i > ul.co-rows { background: var(--soft); }
+
+/* ---- Free now, Housekeeping, All deadlines ---- */
+html[data-look="coach"] .co-myday .co-ad-free2 { margin: 0; padding: 0 var(--sp-4); font-size: var(--fs-md); line-height: 1.45; color: var(--ink-2); }
+html[data-look="coach"] .co-myday .co-ad-hk { min-width: 0; border-radius: var(--radius); }
+html[data-look="coach"] .co-myday .co-ad-hk:focus-visible { outline-offset: 2px; }
+html[data-look="coach"] .co-myday .co-ad-hk > .hk { margin: 0; padding: var(--sp-4); gap: var(--sp-2); }
+html[data-look="coach"] .co-myday .co-ad-dl { margin: 0; }
+/* Its summary on the card's inner 16 (one left x with every other card), 44 tall. */
+html[data-look="coach"] .co-myday details.co-ad-dl { padding: 0; }
+html[data-look="coach"] .co-myday details.co-ad-dl > summary { min-height: 44px; padding: 0 var(--sp-4); border-radius: var(--radius); }
+html[data-look="coach"] .co-myday details.co-ad-dl > summary:focus-visible { outline-offset: -2px; }
+html[data-look="coach"] .co-myday details.co-ad-dl[open] > summary .cd-done-caret { transform: rotate(180deg); }
+html[data-look="coach"] .co-myday details.co-ad-dl[open] { padding-bottom: var(--sp-2); }
+/* The old lists inside keep their own 12 inset; 4 more puts their words on the same 16. */
+html[data-look="coach"] .co-myday details.co-ad-dl > .co-grp { padding-inline: var(--sp-1); }
+/* Housekeeping's own buttons keep the page's 44 px under a finger, where this page places them. */
+@media (max-width: 700px), (pointer: coarse) {
+  html[data-look="coach"] .co-myday .co-ad-hk .co-btn-sm { min-height: 44px; }
+}
+
+/* ---- motion: the pill and the carets do not move under reduce ---- */
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="coach"] .co-myday .co-ad-tabs > .co-ad-tabs-pill,
+  html[data-look="coach"] .co-myday .co-ad-ppl-c { transition: none; }
+}
+
+/* ==== 15 Nov 2026, the owner, from the Team tab: "too many texts, hard to read what and when" — a day nobody
+   works is said once over the table (no hatch in every row); a post is a chip with its hour and its title; a shoot
+   bar says its hour before its title and is never shorter than its words; one "Due and overdue" column in words;
+   no legend; the record folded to one line. ==== */
+html[data-look="coach"] .co-myday .co-ad-tt-sub { margin: 0; padding: 0 var(--sp-4) var(--sp-2); font-size: var(--fs-sm); line-height: 1.45; color: var(--muted); }
+html[data-look="coach"] .co-myday .co-ad-r { grid-template-columns: 170px minmax(0, 1fr) 236px; }
+html[data-look="coach"] .co-myday .co-ad-trk { min-height: 56px; }
+html[data-look="coach"] .co-myday .co-ad-off.is-word::before { display: none; }
+html[data-look="coach"] .co-myday .co-ad-off.is-word span { font-style: normal; font-size: var(--fs-sm); color: var(--muted); }
+html[data-look="coach"] .co-myday .co-ad-bar { min-width: 148px; max-width: 100%; top: 8px; bottom: 8px; }
+html[data-look="coach"] .co-myday .co-ad-bar b { font-size: var(--fs-sm); }
+html[data-look="coach"] .co-myday .co-ad-bar b small { margin-right: var(--sp-2); font: 600 var(--fs-xs)/1 var(--font); font-variant-numeric: tabular-nums; opacity: .8; }
+html[data-look="coach"] .co-myday .co-ad-pin { width: auto; max-width: min(260px, 60%); height: 28px; padding: 0 var(--sp-3) 0 var(--sp-2); gap: var(--sp-1); display: inline-flex; align-items: center; transform: translateY(-50%); border-radius: var(--radius-pill); box-shadow: 0 0 0 1.5px var(--kind-shoot), 0 1px 2px color-mix(in srgb, var(--near-black) 10%, transparent); font: 500 var(--fs-sm)/1 var(--font); color: var(--ink); }
+html[data-look="coach"] .co-myday .co-ad-pin > small { font-weight: 600; font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+html[data-look="coach"] .co-myday .co-ad-pin > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html[data-look="coach"] .co-myday .co-ad-pin.lane-1 { top: 75%; }
+html[data-look="coach"] .co-myday .co-ad-trk:has(.co-ad-pin.lane-1) { min-height: 80px; }
+html[data-look="coach"] .co-myday .co-ad-trk:has(.co-ad-pin.lane-1) .co-ad-pin:not(.lane-1) { top: 30%; }
+html[data-look="coach"] .co-myday .co-ad-owed { gap: var(--sp-1) var(--sp-2); padding: var(--sp-2) var(--sp-3); }
+html[data-look="coach"] .co-myday button.co-ad-od { font-variant-numeric: tabular-nums; }
+@media (max-width: 1300px) { html[data-look="coach"] .co-myday .co-ad-hr-skip { display: none; } }
+/* the record: one line, shut; its sub-line in the muted size; opened, the archive card and the lists as before */
+html[data-look="coach"] .co-myday details.co-ad-record > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--sp-3); }
+html[data-look="coach"] .co-myday details.co-ad-record > summary > h2 { padding-inline: 0; flex: none; }
+html[data-look="coach"] .co-myday details.co-ad-record > summary > .co-ad-dl-sub { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); color: var(--muted); }
+html[data-look="coach"] .co-myday details.co-ad-record > summary > .cd-done-caret { flex: none; }
+html[data-look="coach"] .co-myday details.co-ad-record[open] > .co-ad-hk { margin: var(--sp-2) var(--sp-3) var(--sp-3); border-radius: var(--radius-sm); background: var(--soft); }
+/* a chip starts at its hour and never crosses the track's edge: near the evening it shortens to an ellipsis */
+html[data-look="coach"] .co-myday .co-ad-pin { left: var(--at); max-width: calc(100% - var(--at) - var(--sp-1)); }
+
+/* 16 Nov 2026, the fourth look at 375 (Uzbek): a person's row on the phone list gave the name 35 px beside the
+   chips ("Aziz" over "Topshirish: 1", the status in three lines). Now two lines: the person — avatar, name, status,
+   the chevron at the end — and under the name what they owe, the chips wrapping as they need */
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-ad-ppl-b { grid-template-columns: auto minmax(0, 1fr); position: relative; row-gap: var(--sp-1); }
+  html[data-look="coach"] .co-myday .co-ad-ppl-t { padding-right: 28px; }
+  html[data-look="coach"] .co-myday .co-ad-ppl-t > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  html[data-look="coach"] .co-myday .co-ad-ppl-r { grid-column: 2; grid-row: 2; flex-wrap: wrap; }
+  html[data-look="coach"] .co-myday .co-ad-ppl-r:empty, html[data-look="coach"] .co-myday .co-ad-ppl-r:not(:has(.co-ad-pill)) { display: none; }
+  html[data-look="coach"] .co-myday .co-ad-ppl-c { position: absolute; right: var(--sp-4); top: 50%; transform: translateY(-50%); }
+  html[data-look="coach"] .co-myday .co-ad-ppl-b[aria-expanded="true"] .co-ad-ppl-c { transform: translateY(-50%) rotate(180deg); }
+}

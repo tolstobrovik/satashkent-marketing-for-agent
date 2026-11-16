@@ -1,0 +1,766 @@
+/* ============================================================
+   The one task window (task-window-tz.md, 12 Nov 2026): the view is the editor.
+   Every changeable value is a read-view button at rest and its own small form
+   on press, in the same box (components/edit/Field.jsx); the plan's rows use
+   the form's day strip, roster and time box in place (components/edit/*).
+   Every class starts tw-. Colours, sizes and radii are tokens; no hex.
+   (The strip, the roster and the time box came from styles-edit.css, which is gone.)
+   ============================================================ */
+.r14-tw {
+  --tw-hover: color-mix(in srgb, var(--near-black) 5%, var(--surface));
+  --tw-press: color-mix(in srgb, var(--near-black) 9%, var(--surface));
+  --tw-pad: var(--sp-1);   /* the read view's padding — the open control keeps it, so nothing moves */
+}
+[data-theme="dark"] .r14-tw {
+  --tw-hover: color-mix(in srgb, var(--white) 6%, var(--surface));
+  --tw-press: color-mix(in srgb, var(--white) 11%, var(--surface));
+}
+
+/* ---- the read view: a quiet button that looks like the value ---- */
+.tw-f { position: relative; display: inline-grid; max-width: 100%; min-width: 0; }
+.tw-rv { position: relative; display: inline-block; max-width: 100%; margin: calc(-1 * var(--tw-pad)); padding: var(--tw-pad); border: 0; border-radius: var(--radius-xs); background: none; color: inherit; font: inherit; line-height: inherit; letter-spacing: inherit; text-align: start; cursor: text; -webkit-tap-highlight-color: transparent; }
+.tw-rv:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.tw-rv:active { background: var(--tw-press); }
+@media (hover: hover) and (pointer: fine) {
+  .tw-rv { transition: background-color 120ms ease; }
+  .tw-rv:hover { background: var(--tw-hover); }
+}
+/* on touch the rest state of an EDITABLE value carries a dashed underline (never hover-only) and a 44 px target;
+   a read-only value (the plan's plain span) carries none. The long text: one dashed rule under the paragraph,
+   its 1 px given back below, so opening it moves nothing. */
+@media (pointer: coarse) {
+  .tw-rv-line, button.tw-plv { text-decoration: underline dashed var(--hairline-strong) 1px; text-underline-offset: 4px; }
+  .tw-rv-long > .tw-long-txt { border-bottom: 1px dashed var(--hairline-strong); margin-bottom: -1px; }
+  .tw-rv::after { content: ""; position: absolute; inset: -6px 0; }
+}
+.tw-rv-empty { color: var(--muted); font-weight: 400; }
+.tw-ro { min-width: 0; }
+
+/* a single line: the input in the same box (the title: its own font), ✓ ✕ at its end */
+.tw-f-open { display: grid; gap: var(--sp-1); width: 100%; }
+.tw-line-ed { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; }
+.tw-line-in { flex: 1; min-width: 0; margin: calc(-1 * var(--tw-pad)); padding: var(--tw-pad); border: 0; border-radius: var(--radius-xs); background: var(--surface); color: var(--ink); font: inherit; line-height: inherit; letter-spacing: inherit; box-shadow: inset 0 0 0 1px var(--field-edge); }
+.tw-line-in:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.tw-ok, .tw-cx { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--radius-xs); background: none; color: var(--ink-2); cursor: pointer; }
+.tw-ok.lit, .tw-line-ed .tw-ok { background: var(--primary-soft); color: var(--primary-ink); }
+[data-theme="dark"] .tw-ok.lit, [data-theme="dark"] .tw-line-ed .tw-ok { color: var(--on-primary-soft); }
+.tw-ok:focus-visible, .tw-cx:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+@media (hover: hover) and (pointer: fine) { .tw-cx:hover { background: var(--tw-hover); color: var(--ink); } }
+@media (pointer: coarse) { .tw-ok, .tw-cx { width: 44px; height: 44px; } }
+/* a value in flight: drawn at half strength, no spinner */
+.is-busy > .tw-line-ed, .is-busy > .tw-long-in, .is-busy > .tw-rv, .is-busy .tw-plv { opacity: .55; }
+/* a refusal: the ring stays on the field, the server's words under it */
+.tw-f-bad .tw-line-in, .tw-f-bad .tw-long-in, .tw-f-bad > .tw-rv { box-shadow: inset 0 0 0 1px var(--field-edge), 0 0 0 2px var(--ring); }
+.tw-f-err { display: block; font: 500 var(--fs-sm)/1.4 var(--font); color: var(--critical); }
+[data-theme="dark"] .tw-f-err { color: var(--on-primary-soft); }
+
+/* ---- the long text: the paragraph and the textarea are the same box ---- */
+.tw-long { display: grid; gap: var(--sp-1); min-width: 0; }
+.tw-long-txt, .tw-long-in { display: block; width: 100%; margin: 0; padding: var(--sp-2); font: 400 var(--fs-md)/1.6 var(--font); letter-spacing: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); text-wrap: pretty; }
+.tw-rv-long { display: block; width: calc(100% + 2 * var(--tw-pad)); }
+.tw-rv-long > .tw-long-txt { padding: var(--sp-2); }
+.tw-rv-long.is-empty > .tw-long-txt { color: var(--muted); }
+.tw-ro > .tw-long-txt { padding: var(--sp-2); }
+.tw-long-in { box-sizing: border-box; min-height: 0; margin: calc(-1 * var(--tw-pad)); width: calc(100% + 2 * var(--tw-pad)); padding: calc(var(--sp-2) + var(--tw-pad)); border: 0; border-radius: var(--radius-xs); background: var(--surface); box-shadow: inset 0 0 0 1px var(--field-edge); resize: none; field-sizing: content; transition: box-shadow 120ms ease; }
+.tw-long-in:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.tw-long-bar { display: flex; align-items: center; gap: var(--sp-1); min-height: 32px; }
+.tw-long-hint { flex: 1; min-width: 0; font: 400 var(--fs-xs)/1.3 var(--font); color: var(--muted); }
+@media (pointer: coarse) { .tw-long-bar { min-height: 44px; } }
+.tw-long-links { margin: 0; padding: 0 var(--sp-2); font: 400 var(--fs-sm)/1.5 var(--font); color: var(--muted); overflow-wrap: anywhere; }
+.tw-draft-note { padding: 0 var(--sp-2); font: 500 var(--fs-xs)/1.3 var(--font); color: var(--warn-ink); }
+.tw-keep, .tw-clash { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-sm); background: var(--surface-2); font: 500 var(--fs-sm)/1.4 var(--font); color: var(--ink); }
+.tw-keep > span, .tw-clash > span { flex: 1 1 200px; min-width: 0; }
+.tw-theirs { display: grid; gap: var(--sp-1); padding: var(--sp-2); border-radius: var(--radius-sm); background: var(--surface-2); }
+.tw-theirs-lb { font: 500 var(--fs-xs)/1.2 var(--font); color: var(--muted); }
+
+/* ---- a choice: the value as a chip, a menu grown from it ---- */
+.tw-chipf { display: inline-grid; position: relative; }
+.tw-chipb { display: inline-flex; align-items: center; gap: var(--sp-1); margin: 0; min-height: 32px; padding: 0 var(--sp-2); border-radius: var(--radius-pill); cursor: pointer; font: 500 var(--fs-sm)/1 var(--font); color: var(--ink-2); }
+.tw-chipb > svg { color: var(--ink-3); flex: none; }
+.tw-chip-c { transition: rotate 160ms var(--ease-out); }
+.tw-chipb[aria-expanded="true"] .tw-chip-c { rotate: 180deg; }
+.tw-chip-ro { display: inline-flex; align-items: center; gap: var(--sp-1); font: 500 var(--fs-sm)/1.3 var(--font); color: var(--ink-2); }
+.tw-chip-ro > svg { color: var(--ink-3); }
+.tw-menu { position: absolute; top: calc(100% + var(--sp-1)); left: 0; z-index: 6; display: grid; min-width: 200px; max-height: 320px; overflow-y: auto; padding: var(--sp-1); border-radius: var(--radius-xs); background: var(--surface); box-shadow: var(--shadow-lg); transform-origin: top left; opacity: 1; scale: 1; transition: opacity 160ms var(--ease-out), scale 160ms var(--ease-out); }
+@starting-style { .tw-menu { opacity: 0; scale: .96; } }
+[data-theme="dark"] .tw-menu { background: var(--surface-2); box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--hairline); }
+.tw-mi { display: flex; align-items: center; gap: var(--sp-2); min-height: 40px; padding: 0 var(--sp-3); border: 0; border-radius: var(--radius-xs); background: none; color: var(--ink); font: 500 var(--fs-md)/1.2 var(--font); text-align: start; cursor: pointer; }
+.tw-mi > svg { color: var(--ink-3); flex: none; }
+.tw-mi-on { margin-inline-start: auto; color: var(--ink) !important; }
+.tw-mi:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) { .tw-mi:hover { background: var(--tw-hover); } }
+@media (pointer: coarse) { .tw-mi { min-height: 44px; } }
+
+/* ---- the header: the title button, the meta chips, the "…" menu ---- */
+.tw-title-f { display: block; width: 100%; }
+.tw-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); margin-top: var(--sp-1); }
+.tw-more-menu { position: relative; }
+.tw-more-menu .tw-menu { left: auto; right: 0; transform-origin: top right; }
+
+/* ---- the plan: one row per stop, each value its own field ---- */
+.tw-plan { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.tw-pr { --kt: var(--ink-3); display: grid; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--kt) 7%, var(--surface)); box-shadow: inset 4px 0 0 var(--kt); }
+[data-theme="dark"] .tw-pr { background: color-mix(in srgb, var(--kt) 14%, var(--surface)); }
+.tw-pr-shoot { --kt: var(--kind-shoot); } .tw-pr-edit { --kt: var(--kind-cut); } .tw-pr-design { --kt: var(--kind-art); } .tw-pr-out { --kt: var(--good); }
+.tw-pr-line { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: var(--sp-1) var(--sp-3); min-height: 56px; padding: var(--sp-2) var(--sp-4); }
+.tw-pr-line > .co-kic { width: 30px; height: 30px; border-radius: var(--radius-xs); }
+.tw-pr-vals { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); min-width: 0; }
+.tw-pr-w { font: 600 var(--fs-md)/1.3 var(--font); color: var(--ink); }
+.tw-pr-tick { color: var(--good-ink); }
+.tw-plv { display: inline-flex; align-items: center; gap: var(--sp-1); font: 500 var(--fs-sm)/1.3 var(--font); color: var(--ink-2); }
+button.tw-plv { min-height: 32px; margin: 0; padding: 0 var(--sp-2); cursor: pointer; }
+.tw-plv.is-late { color: var(--critical); }
+[data-theme="dark"] .tw-plv.is-late { color: var(--on-primary-soft); }
+.tw-plv.is-empty { color: var(--muted); }
+.tw-plv[aria-expanded="true"] { background: var(--tw-press); }
+.tw-plv .avatar { width: 22px; height: 22px; font-size: var(--fs-xs); }
+/* the cover before anybody is on it: a ghost row */
+.tw-pr-ghost { background: transparent; box-shadow: none; border: 1.5px dashed var(--field-edge); }
+.tw-pr-ghost .tw-pr-w { color: var(--muted); }
+.tw-pr-ghost .co-kic { opacity: .6; }
+/* a proposal waiting for the admin: the old day struck, the new beside it */
+.tw-pr-prop { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); font: 500 var(--fs-sm)/1.3 var(--font); }
+.tw-pr-prop s { color: var(--muted); }
+.tw-pr-prop b { padding: 0 var(--sp-1); border-radius: var(--radius-xs); background: var(--tint-warn); color: var(--ink); }
+/* what opens under the row: the strip, the roster, the hours, the ask — grid rows, 200 ms */
+.tw-pr-open { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 200ms var(--ease-out); }
+@starting-style { .tw-pr-open { grid-template-rows: 0fr; } }
+.tw-pr-open > div { min-height: 0; overflow: clip; }
+.tw-pr-ed { display: grid; gap: var(--sp-2); padding: 0 var(--sp-4) var(--sp-3) calc(var(--sp-4) + 30px + var(--sp-3)); }
+.tw-pr-edbar { display: flex; align-items: center; gap: var(--sp-2); }
+.tw-pr-edbar > span { flex: 1; min-width: 0; font: 500 var(--fs-xs)/1.3 var(--font); color: var(--muted); }
+
+/* ---- the day strip (from the edit form) ---- */
+.tw-days { display: flex; gap: var(--sp-1); align-items: stretch; overflow-x: auto; scrollbar-width: thin; padding: var(--sp-0); margin: calc(-1 * var(--sp-0)); }
+.tw-days:focus { outline: none; }
+.tw-day { flex: none; display: grid; justify-items: center; align-content: center; gap: 2px; width: 48px; height: 56px; padding: var(--sp-1) var(--sp-0); border: 1px solid var(--field-edge); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.tw-day-w { font: 500 var(--fs-xs)/1.2 var(--font); color: var(--muted); text-transform: capitalize; }
+.tw-day-n { font: 600 var(--fs-md)/1.1 var(--font); font-variant-numeric: tabular-nums; }
+.tw-day.is-one { background: var(--st-shoot-bg); color: var(--st-shoot-ink); }
+.tw-day.is-two { background: color-mix(in srgb, var(--warning) 45%, var(--surface)); color: var(--st-shoot-ink); }
+.tw-day.is-many { background: color-mix(in srgb, var(--warning) 70%, var(--surface)); color: var(--st-shoot-ink); }
+.tw-day-m { display: flex; align-items: center; justify-content: center; gap: 2px; height: 4px; }
+.tw-day-m > i { display: block; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.tw-day.is-full .tw-day-m > i { width: 12px; height: 2px; border-radius: var(--radius-pill); }
+.tw-day.is-one .tw-day-w, .tw-day.is-two .tw-day-w, .tw-day.is-many .tw-day-w { color: var(--st-shoot-ink); }
+[data-theme="dark"] .tw-day.is-two, [data-theme="dark"] .tw-day.is-many, [data-theme="dark"] .tw-day.is-two .tw-day-w, [data-theme="dark"] .tw-day.is-many .tw-day-w { color: var(--ink); }
+[data-theme="dark"] .tw-day.is-two { background: color-mix(in srgb, var(--warning) 36%, var(--surface)); }
+[data-theme="dark"] .tw-day.is-many { background: color-mix(in srgb, var(--warning) 55%, var(--surface)); }
+.tw-day.is-full { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.tw-day.is-full .tw-day-w { color: var(--surface); opacity: .8; }
+/* a day off: the soft ground and a dashed edge (no hatching — no gradients in the identity) */
+.tw-day.is-off { background: var(--surface-2); color: var(--muted); border-style: dashed; }
+.tw-day.today .tw-day-w::after { content: ""; display: inline-block; width: 4px; height: 4px; margin-left: 3px; border-radius: 50%; background: currentColor; vertical-align: middle; }
+.tw-day.film:not([aria-checked="true"]) .tw-day-n { text-decoration: underline dotted currentColor 2px; text-underline-offset: 3px; }
+.tw-day[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 4px var(--surface); border-color: var(--ink); }
+.tw-day[aria-checked="true"] .tw-day-n { font-weight: 700; }
+.tw-day:disabled { color: var(--muted); border-color: var(--hairline); cursor: default; background: var(--surface); }
+.tw-day:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .tw-day { transition: background-color 120ms ease, border-color 120ms ease; } .tw-day:not(:disabled):not([aria-checked="true"]):not([class*="is-"]):hover { background: var(--soft); border-color: var(--ink-3); } }
+.tw-other { flex: none; display: inline-flex; }
+.tw-other .co-dp-b { width: 48px; min-height: 56px; height: 56px; justify-content: center; padding: 0; border-color: var(--field-edge); border-radius: var(--radius-sm); color: var(--ink-2); }
+.tw-other .co-dp-b > span { display: none; }
+
+/* ---- the roster (from the edit form) ---- */
+.tw-roster { display: grid; gap: var(--sp-2); }
+.tw-pts { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-2); }
+.tw-pt { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; gap: var(--sp-0) var(--sp-3); align-items: center; min-height: 56px; padding: var(--sp-2) var(--sp-3); border: 1px solid var(--field-edge); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.tw-pt .avatar { grid-row: 1 / 3; }
+.tw-pt-t { display: grid; min-width: 0; }
+.tw-pt-t b { font: 600 var(--fs-sm)/1.25 var(--font); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tw-pt-t small { font: 500 var(--fs-xs)/1.3 var(--font); color: var(--muted); }
+.tw-pt .tw-st { grid-column: 2; }
+.tw-pt[aria-checked="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.tw-pt:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .tw-pt { transition: background-color 120ms ease, border-color 120ms ease; } .tw-pt:not([aria-checked="true"]):hover { background: var(--soft); border-color: var(--ink-3); } }
+.tw-pt-none { color: var(--muted); }
+.tw-none-ic { grid-row: 1 / 3; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--surface-2); color: var(--ink-3); }
+.tw-st { display: inline-flex; align-items: center; gap: var(--sp-1); font: 600 var(--fs-xs)/1.2 var(--font); color: var(--good-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tw-st::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.tw-st.part { color: var(--warn-ink); }
+.tw-st.busy { color: var(--muted); }
+
+/* ---- the shoot's hours (from the edit form) ---- */
+.tw-hours { display: grid; gap: var(--sp-1); min-width: 0; }
+.tw-hours-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); min-height: 44px; }
+.tw-range { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; padding: 0 var(--sp-2) 0 var(--sp-3); border: 1px solid var(--field-edge); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); }
+.tw-range > svg { color: var(--ink-3); flex: none; margin-inline-end: var(--sp-1); }
+.tw-range-d { color: var(--ink-3); }
+.tw-range-len { margin-inline-start: var(--sp-2); padding-inline-start: var(--sp-2); border-inline-start: 1px solid var(--hairline); font: 500 var(--fs-sm)/1 var(--font); color: var(--muted); white-space: nowrap; }
+.tw-rsel { appearance: none; -webkit-appearance: none; border: 0; background: transparent; padding: 0 var(--sp-1); min-width: 48px; min-height: 44px; text-align: center; font: 600 var(--fs-md)/1 var(--font); font-variant-numeric: tabular-nums; color: var(--ink); cursor: pointer; border-radius: var(--radius-xs); }
+.tw-rsel:disabled { color: var(--muted); cursor: default; }
+.tw-rsel:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.tw-free { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
+.tw-free-lb { font: 500 var(--fs-xs)/1.2 var(--font); color: var(--muted); margin-inline-end: var(--sp-1); }
+.tw-free-b { min-height: 32px; padding: 0 var(--sp-2); border: 0; border-radius: var(--radius-xs); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline-strong); color: var(--ink-2); font: 500 var(--fs-sm)/1 var(--font); font-variant-numeric: tabular-nums; cursor: pointer; }
+.tw-free-b[aria-pressed="true"] { background: var(--ink); color: var(--surface); box-shadow: none; }
+.tw-free-b:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.tw-free-none { font: 500 var(--fs-xs)/1.3 var(--font); color: var(--muted); }
+@media (pointer: coarse) { .tw-free-b, .tw-rsel { min-height: 44px; } }
+
+/* ---- asking to move a promised day ---- */
+.tw-askmove { display: grid; gap: var(--sp-2); max-width: 420px; padding: var(--sp-3); border-radius: var(--radius-sm); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
+.tw-askmove .co-dp-b { width: 100%; min-height: 44px; border-color: var(--field-edge); border-radius: var(--radius-sm); justify-content: flex-start; }
+.tw-askmove-b { display: flex; gap: var(--sp-2); }
+.tw-bad > .tw-days, .tw-days.tw-bad, .tw-hours.tw-bad .tw-range { box-shadow: 0 0 0 2px var(--ring); border-radius: var(--radius-sm); }
+
+/* ---- the field's Undo line, where the eye is ---- */
+.tw-fundo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+
+/* ---- a phone ---- */
+@media (max-width: 640px) {
+  .tw-pr-line { padding: var(--sp-2) var(--sp-3); }
+  .tw-pr-ed { padding: 0 var(--sp-3) var(--sp-3); }
+  .tw-days { margin-inline: calc(-1 * var(--sp-3)); padding: 2px var(--sp-3); scroll-padding-inline: var(--sp-3); scroll-snap-type: x proximity; scrollbar-width: none; }
+  .tw-day { width: 48px; height: 52px; scroll-snap-align: start; }
+  .tw-pts { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--sp-3)); padding: 2px var(--sp-3); }
+  .tw-pt { flex: none; width: 176px; }
+  .tw-range { width: 100%; justify-content: space-between; }
+  .tw-menu { position: fixed; left: var(--sp-3); right: var(--sp-3); top: auto; bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px)); max-height: 60vh; transform-origin: bottom center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-pr-open, .tw-menu, .tw-chip-c, .tw-long-in { transition: none; }
+  @starting-style { .tw-pr-open { grid-template-rows: 1fr; } .tw-menu { scale: none; } }
+}
+
+/* ---- §2.4/§2.5: one scale, one line for an admin's asks ---- */
+/* the title 24/600 Inter on a desk (20 on a phone); its words fill the row, so the button never wraps them early */
+.r14-tw .co-p-head h2#co-win-t { font: 600 var(--fs-2xl)/1.25 var(--font); letter-spacing: 0; }
+.r14-tw .co-p-head h2#co-win-t > .tw-tt { flex: 1 1 auto; }
+@media (max-width: 640px) { .r14-tw .co-p-head h2#co-win-t { font-size: var(--fs-xl); } }
+/* a block's head: 15/600 muted with a 16 px icon at 1.75 */
+.r14-tw .tw-bh > h3 { font: 600 var(--fs-md)/1.2 var(--font); color: var(--muted); }
+.r14-tw .tw-bh > svg { flex: none; width: 16px; height: 16px; stroke-width: 1.75; color: var(--muted); }
+/* the admin's asks band: the sentence and its two buttons on one line, the buttons at the right */
+.r14-tw .co-asks .co-note { align-items: center; }
+.r14-tw .co-asks .co-ask-day { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.r14-tw .co-asks .co-ask-day > span:first-child { flex: 1 1 320px; min-width: 0; }
+.r14-tw .co-asks .co-ask-day > .co-btns { margin-inline-start: auto; }
+/* the reference player: the column's width, never taller than 320 px */
+.r14-tw .tw-refvid { max-height: 320px; }
+/* an admin's answer on the plan row: the reason, then its two buttons together at the right */
+.tw-pr-ask { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.tw-pr-ask > span:first-child { flex: 1 1 200px; min-width: 0; }
+.tw-pr-ask > .co-btns { display: flex; gap: var(--sp-2); margin-inline-start: auto; }
+/* the plan block: its head and its rows 8 apart (§2.5); on a phone it stands just before the brief, as in its desk column */
+.tw-plan-blk { display: grid; gap: var(--sp-2); }
+@media (max-width: 640px) { .tw-right > .tw-plan-blk { order: 6; } }
+/* History: a long text's line opens the version before, to copy from (§2.7) */
+.tw-prev { grid-column: 1 / -1; margin-top: var(--sp-1); }
+.tw-prev > summary { width: fit-content; min-height: 24px; font: 500 var(--fs-sm)/1 var(--font); line-height: 24px; color: var(--ink-2); cursor: pointer; }
+.tw-prev > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: var(--radius-xs); }
+.tw-prev > .tw-long-txt { max-height: 240px; overflow: auto; margin: var(--sp-1) 0 var(--sp-2); border-radius: var(--radius-xs); background: var(--surface-2); }
+@media (pointer: coarse) { .tw-prev > summary { min-height: 44px; line-height: 44px; } }
+
+/* ---- the review fixes (12 Nov 2026): returned by the fixers of the fields, the plan and the window ---- */
+/* from: fields */
+/* item 41: the long text's read view is as wide as its textarea (merge into the existing .tw-rv-long rule, line 57) */
+.tw-rv-long { max-width: none; }
+/* item 44: the divider between the job's holders and the rest of the team in the roster (a grid row on a desk, one quiet word in the phone's swipe row) */
+.tw-pt-sep { grid-column: 1 / -1; flex: none; align-self: center; padding: var(--sp-1) var(--sp-1) 0; font: 500 var(--fs-xs)/1.2 var(--font); color: var(--muted); }
+/* item 7: the hours box at half strength while its PATCH is out (the focused select stays enabled) */
+.tw-hours.is-busy .tw-range { opacity: .55; }
+/* from: plan */
+/* TaskPlan: the value in flight at half strength, a refused one ringed (task-window-tz.md §2.2) */
+.tw-plv.is-busy { opacity: .55; }
+.tw-pr-ed[data-busy="day"] .tw-day[aria-checked="true"],
+.tw-pr-ed[data-busy="seat"] .tw-pt[aria-checked="true"],
+.tw-pr-ed[data-busy="time"] .tw-range { opacity: .55; }
+.tw-plv.tw-bad, .tw-range.tw-bad { box-shadow: 0 0 0 2px var(--ring); border-radius: var(--radius-sm); }
+/* a plan row's strip scrolled into sight on a phone clears the sticky header (§2.8) */
+@media (max-width: 640px) { .co-panel.r14-tw { scroll-padding-top: calc(var(--co-head-h, 72px) + 8px); } }
+/* from: window */
+/* The window opens on its heading (addendum §1): programmatic focus there draws no ring. */
+.r14-tw-tt h2[tabindex="-1"]:focus { outline: none; }
+/* A seat outside the plan (whose piece, who checks it): the picker reads as a quiet value. */
+.tw-seat-f { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.tw-seat-f .r14-pp-trigger { width: auto; min-height: 32px; border-color: transparent; background: none; padding: 0 var(--sp-2) 0 0; font-weight: 500; color: var(--ink-2); }
+.tw-seat-f .r14-pp-trigger:hover { background: var(--tw-hover); }
+/* A delivery link with its quiet pencil; a reference's links as pencils with the site's name. */
+.tw-file-ln { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.tw-pen-f .tw-rv-line { display: inline-flex; align-items: center; gap: var(--sp-1); color: var(--ink-2); font-size: var(--fs-sm); }
+.tw-ref-links { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+/* The checklist: one checkbox a line. */
+.tw-checks { display: flex; flex-direction: column; gap: var(--sp-1); }
+.tw-check { display: flex; align-items: center; gap: var(--sp-2); min-height: 24px; cursor: pointer; }
+.tw-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); }
+/* The version before, under a history line in TaskMore (cmt-row is a flex row). */
+.hist-row:has(.tw-prev) { flex-wrap: wrap; }
+.hist-row .tw-prev { flex-basis: 100%; }
+@media (pointer: coarse) {
+  .tw-check, .tw-seat-f .r14-pp-trigger { min-height: 44px; }
+}
+
+/* ==== 12 Nov 2026, the owner, from the task window: "no outline — make it nicer", "toggles on Plan, Brief
+   and the rest, open by default", "why the unused space under Reference — make the whole thing adaptive". ==== */
+/* A section's head is its fold: the icon, the name, a chevron that turns; folded, only the head stays. */
+.r14-tw .tw-bh > h3 { margin: 0; flex: 1 1 auto; min-width: 0; }
+.tw-bh-t { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 32px; margin: 0 calc(-1 * var(--sp-1)); padding: 0 var(--sp-1); border: 0; border-radius: var(--radius-xs); background: none; color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tw-bh-t > svg { flex: none; width: 16px; height: 16px; stroke-width: 1.75; color: var(--muted); }
+.tw-bh-t .tw-bh-c { transition: transform 200ms var(--ease-out); }
+.tw-bh-t[aria-expanded="false"] .tw-bh-c { transform: rotate(-90deg); }
+@media (hover: hover) { .tw-bh-t:hover { color: var(--ink); } }
+.tw-bh-t:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (pointer: coarse) { .tw-bh-t { min-height: 44px; } }
+.co-blk.is-shut > :not(.tw-bh) { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .tw-bh-t .tw-bh-c { transition: none; } }
+
+/* The plan's rows: a soft tint of their kind, no rule down the left, no dashed outline on an empty one. */
+.r14-tw .tw-pr { box-shadow: none; }
+.r14-tw .tw-pr-ghost { border: 0; background: color-mix(in srgb, var(--ink) 4%, transparent); }
+@media (hover: hover) { .r14-tw .tw-pr-ghost:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); } }
+
+/* Every card is as tall as what it holds: the brief and the reference no longer stretch to make the two
+   columns end on one line (update 2, 9 Nov), which left an empty box under a short reference. */
+@media (min-width: 641px) {
+  .r14-tw .tw-right > .r14-brief, .r14-tw .tw-left > .co-ref:not([hidden]),
+  .r14-tw .tw-right .r14-brief-box, .r14-tw .tw-left .tw-refcard { flex: 0 0 auto; }
+}
+/* …and they wear a soft fill, not an outline. */
+.r14-tw .r14-brief-box, .r14-tw .tw-refcard { box-shadow: none; background: color-mix(in srgb, var(--ink) 3%, transparent); }
+
+/* ==== 12 Nov 2026, the owner, from the task window (round 2) ==== */
+/* The plan was "too prolonged": four tall cards. Each stop is now one compact line — a small mark, the stop,
+   its person and its day — 40 px, the rows 4 px apart, the same soft tint of its kind. */
+.r14-tw .tw-plan { gap: var(--sp-1); }
+.r14-tw .tw-pr-line { min-height: 40px; padding: var(--sp-1) var(--sp-3); grid-template-columns: 24px minmax(0, 1fr); gap: var(--sp-1) var(--sp-2); }
+.r14-tw .tw-pr-line > .co-kic { width: 24px; height: 24px; }
+.r14-tw .tw-pr-line > .co-kic svg { width: 14px; height: 14px; }
+.r14-tw .tw-pr-w { font-size: var(--fs-sm); }
+.r14-tw .tw-pr-vals { gap: var(--sp-1) var(--sp-2); font-size: var(--fs-sm); }
+.r14-tw .tw-pr-ed { padding: 0 var(--sp-3) var(--sp-2) calc(var(--sp-3) + 24px + var(--sp-2)); }
+@media (pointer: coarse) { .r14-tw .tw-pr-line { min-height: 44px; } }
+
+/* The brief: each part its own soft card with its mark — the ТЗ in the edit's colour, the script in the
+   shoot's, the post copy in the artwork's — so the three read apart at a glance. */
+.r14-tw .r14-brief-box { background: none; padding: 0; gap: var(--sp-2); }
+.r14-tw .r14-brief-box > .tw-part { --bk: var(--ink-3); padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--bk) 8%, var(--surface)); }
+[data-theme="dark"] .r14-tw .r14-brief-box > .tw-part { background: color-mix(in srgb, var(--bk) 14%, var(--surface)); }
+.r14-tw .tw-part[data-field="tz"] { --bk: var(--kind-cut); }
+.r14-tw .tw-part[data-field="script"] { --bk: var(--kind-shoot); }
+.r14-tw .tw-part[data-field="description"] { --bk: var(--kind-art); }
+.r14-tw .tw-part > .co-main-lbl { display: inline-flex; align-items: center; gap: var(--sp-2); font-weight: 600; color: var(--ink); }
+.r14-tw .tw-part > .co-main-lbl svg { flex: none; stroke-width: 1.75; color: var(--bk); }
+
+/* The reference is usually a video: it plays first, wide, a reel at its own tall shape. */
+.r14-tw video.tw-refvid { width: 100%; max-height: 480px; object-fit: contain; }
+.r14-tw iframe.tw-refvid.tall { width: min(270px, 100%); }
+
+/* History, under the plan and the brief (12 Nov 2026, the owner: "a preview, and opening it extends a little,
+   not fully"): three lines; "Show more" opens a short box that scrolls in itself, never the whole log. */
+.r14-tw .tw-hist { display: grid; gap: var(--sp-2); }
+.r14-tw .tw-hist .tw-log { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--sp-1); }
+.r14-tw .tw-hist .tw-log > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--sp-1) var(--sp-2); padding: var(--sp-1) 0; font-size: var(--fs-sm); line-height: 1.4; }
+.r14-tw .tw-hist .tw-log > li > span { min-width: 0; overflow-wrap: anywhere; }
+.r14-tw .tw-hist .tw-log > li > time { color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; }
+.r14-tw .tw-hist .tw-log > li > .tw-prev { grid-column: 2 / -1; }
+.r14-tw .tw-hist.is-more .tw-log { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; padding-inline-end: var(--sp-1);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent); mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent); }
+.r14-tw .tw-hist-more { justify-self: start; }
+
+/* ==== The window's head (12 Nov 2026, the owner: "fix this view on the top"; picked: the title, then one quiet line) ====
+   No channel tile: the title owns the top left, and under it one line — the channel · whose piece · the kind — in
+   the body's ink, each still a picker for whoever may change it. The icons sit in one row, read from the corner
+   inward: × · Delete · Copy link · More; bare, never a grey square each, never wrapped. */
+.r14-tw .r14-tw-h { grid-template-columns: minmax(0, 1fr) auto; align-items: start; column-gap: var(--sp-4); }
+.r14-tw .r14-tw-h .r14-tw-tt { grid-row: 1; grid-column: 1; gap: var(--sp-1); }
+.r14-tw .r14-tw-h .tw-acts { grid-row: 1; grid-column: 2; align-self: start; position: relative; display: flex; flex-wrap: nowrap; flex: none; gap: 2px; margin: calc(-1 * var(--sp-1)) calc(-1 * var(--sp-1)) 0 0; }
+.r14-tw .r14-tw-h .tw-acts .co-x { width: 40px; height: 40px; flex: none; background: none; color: var(--ink-2); border-radius: var(--radius-sm); }
+.r14-tw .r14-tw-h .tw-acts .co-x[aria-expanded="true"] { background: var(--tw-hover, color-mix(in srgb, var(--ink) 8%, transparent)); color: var(--ink); }
+.r14-tw .r14-tw-h .tw-acts .co-x:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+@media (hover: hover) {
+  .r14-tw .r14-tw-h .tw-acts .co-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+  .r14-tw .r14-tw-h .tw-acts .tw-del-ib:hover { color: var(--danger, var(--brand-500)); }
+}
+/* the menu (More's items or Delete's question) hangs from the row's right edge, whichever icon opened it */
+.r14-tw .r14-tw-h .tw-acts .tw-more-menu { position: static; display: contents; }
+@media (min-width: 641px) { .r14-tw .r14-tw-h .tw-acts .tw-menu { left: auto; right: 0; top: calc(100% + var(--sp-1)); transform-origin: top right; } }
+
+/* the line under the title: quiet words, a middle dot between them, each a picker that shows itself on hover */
+.r14-tw .tw-meta-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--sp-2); margin: 0; color: var(--ink-2); }
+.r14-tw .tw-meta-line > * { display: inline-flex; align-items: center; min-width: 0; margin: 0; }
+.r14-tw .tw-meta-line > * + *::before { content: '·'; margin-inline-end: var(--sp-2); color: var(--muted); font-weight: 600; }
+.r14-tw .tw-meta-line .tw-chipb,
+.r14-tw .tw-meta-line .tw-seat-f .r14-pp-trigger { min-height: 32px; padding: 0 var(--sp-1); margin: 0 calc(-1 * var(--sp-1)); border: 0; border-radius: var(--radius-sm); background: none; box-shadow: none; font: 500 var(--fs-sm)/1.2 var(--font); color: var(--ink-2); }
+.r14-tw .tw-meta-line .tw-chip-c, .r14-tw .tw-meta-line .r14-pp-chev { width: 14px; height: 14px; color: var(--muted); }
+.r14-tw .tw-meta-line .tw-chipb > svg:first-child { color: var(--ink-3, var(--muted)); }
+.r14-tw .tw-meta-line .tw-owner { gap: var(--sp-1); font: 500 var(--fs-sm)/1.2 var(--font); color: var(--ink-2); }
+.r14-tw .tw-meta-line .tw-owner span { font-size: var(--fs-sm); }
+.r14-tw .tw-meta-line .tw-chip-ro { font-size: var(--fs-sm); }
+.r14-tw .tw-meta-line .tw-chans { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }   /* several channels wrap on a line of their own; nothing is cut */
+.r14-tw .tw-meta-line > .tw-owner::before { margin-inline-end: var(--sp-1); }   /* the owner row has its own gap after the dot */
+/* on a finger every picker on the line is 44 px, the rule for touch (the chips kept 32 + 12 through .tw-rv, the owner picker did not) */
+@media (pointer: coarse) { .r14-tw .tw-meta-line .tw-chipb, .r14-tw .tw-meta-line .tw-seat-f .r14-pp-trigger { min-height: 44px; } }
+@media (hover: hover) {
+  .r14-tw .tw-meta-line .tw-chipb:hover, .r14-tw .tw-meta-line .tw-seat-f .r14-pp-trigger:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); }
+}
+
+/* A phone: "Back" top left; the × goes (Back is the way out), More stays — it was hidden with it, so nothing
+   could be deleted or copied there. On a phone More holds Copy link and Delete (CoachTask.jsx menuItems). */
+@media (max-width: 640px) {
+  .r14-tw .r14-tw-h { grid-template-columns: 32px minmax(0, 1fr) auto; column-gap: var(--sp-2); }
+  .r14-tw .r14-tw-h .r14-tw-tt { grid-column: 2; }
+  .r14-tw .r14-tw-h .tw-acts { grid-column: 3; }
+  .r14-tw .r14-tw-h .tw-acts .co-x.tw-ib { display: grid; width: 44px; height: 44px; }
+  .r14-tw .r14-tw-h .tw-acts .co-x.tw-close { display: none; }
+  /* the menu is a sheet at the bottom here (.tw-menu on a phone, above), never hung under the row off the screen */
+  .r14-tw .r14-tw-h .tw-acts .tw-menu { left: var(--sp-3); right: var(--sp-3); top: auto; bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px)); transform-origin: bottom center; }
+  /* the line under the title: no middle dots on a phone, where a wrapped item would start its line with one */
+  .r14-tw .tw-meta-line { column-gap: var(--sp-3); }
+  .r14-tw .tw-meta-line > * + *::before { content: none; }
+}
+
+/* One file alone (12 Nov 2026, the owner: "remove the name of the file"): no name and size beside it, so the file
+   takes the block's whole width, a player's dark frame with the picture whole inside it — an upright reel stands in
+   the middle of it, a wide video fills it. The name is still the Play button's name and its tooltip. */
+.tw-grid.tw-single { grid-template-columns: minmax(0, 1fr); }
+.tw-mat .tw-grid.tw-single:not(.tw-compact) .tw-tile { aspect-ratio: 16 / 9; max-height: min(420px, 56vh); width: 100%; }
+.tw-mat .tw-grid.tw-single:not(.tw-compact) .tw-tile.tw-v { aspect-ratio: auto; height: min(420px, 56vh); }
+.tw-mat .tw-grid.tw-single:not(.tw-compact) .tw-tile video, .tw-mat .tw-grid.tw-single:not(.tw-compact) .tw-tile img { object-fit: contain; }
+
+/* ==== 12 Nov 2026, the owner, from the window of a published reel: "make the interface better" — polish, no new structure. ==== */
+/* The line under the title: a channel's name never breaks in two ("Instagram / Main"); the line wraps between pickers instead. */
+.r14-tw .tw-meta-line .tw-chipb, .r14-tw .tw-meta-line .tw-chipb > span, .r14-tw .tw-meta-line .tw-chip-ro:not(.tw-chans) { white-space: nowrap; }
+/* A done stop: the tick stands clear of its word (it was set against the first letter), both on one centre line. */
+.r14-tw .tw-pr-w { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.r14-tw .tw-pr-w .tw-pr-tick { flex: none; }
+/* One upright clip alone (the edit, a reel): the frame hugs the picture at the footage tiles' own width — the left half of
+   the column, 9:16 — instead of a wide dark box with the reel in the middle of it. A wide clip still takes the width. */
+@media (min-width: 641px) {
+  .tw-mat .tw-grid.tw-single:not(.tw-compact) .tw-tile.tw-v { width: calc(50% - var(--sp-1)); height: auto; aspect-ratio: 9 / 16; max-height: none; }
+}
+/* The blocks' heads read as the window's second level: the word in the second ink, its mark the same; the count beside it quiet. */
+.r14-tw .tw-bh > h3, .r14-tw .tw-bh > svg, .r14-tw .tw-bh-t > svg { color: var(--ink-2); }
+.r14-tw .tw-bh .tw-n { color: var(--muted); }
+/* The window breathes a little more: 32 px between blocks on a desk (was 24), so a column of cards reads as a column of blocks. */
+@media (min-width: 641px) { .r14-tw .tw-top, .r14-tw .tw-left, .r14-tw .tw-right { gap: var(--sp-8); } }
+/* The brief's three cards: the label and its text 8 px apart, the card's padding 16 all round, so the three read as one set. */
+.r14-tw .r14-brief-box > .tw-part { gap: var(--sp-2); padding: var(--sp-4); }
+
+/* ==== 13 Nov 2026, the owner's pick: "the call sheet form" (concept C, components/DraftTask.jsx) ====
+   One sheet over the dimmed board: the name and the kind on one line, the channel and whose task it is, the stops
+   side by side with their strips open, a dashed Cover line, the brief's boxes in a row, the foot. Tokens only; the
+   strips, hours and chips are the window's own pieces, laid out for a card a third of the sheet wide. */
+.tw-c-win { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; }   /* .co-win itself is static: the panel and the scrim are fixed on their own */
+.tw-c-win .co-scrim { animation: co-fade 0.16s ease; }
+.tw-c { position: relative; z-index: 91; width: min(1040px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow: auto; overscroll-behavior: contain; display: grid; gap: var(--sp-4); align-content: start; padding: var(--sp-5) var(--sp-6) var(--sp-5); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-lg); animation: co-fade 0.16s ease; }
+[data-theme="dark"] .tw-c { box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--hairline); }
+.co-win.out .tw-c, .co-win.out.tw-c-win .co-scrim { animation: co-fade-out 0.16s ease forwards; }
+/* the top line: the name field (48 px, the window's ring when it has the keyboard), the kind, the two icons */
+.tw-c-top { display: flex; align-items: center; gap: var(--sp-3); }
+.tw-c-name { flex: 1 1 auto; min-width: 0; display: block; }
+.tw-c-name-in { width: 100%; min-height: 48px; padding: 0 var(--sp-4); margin: 0; font: 500 var(--fs-lg)/1.3 var(--font); }
+.tw-c-name-in::placeholder { color: var(--muted); font-weight: 400; }
+.tw-c-top .co-x { width: 40px; height: 40px; flex: none; background: none; color: var(--ink-2); border-radius: var(--radius-sm); }
+@media (hover: hover) { .tw-c-top .co-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); } }
+/* the chips: a kind, a channel, a seat — the window's chip with an edge, 32 px, its menu grown from it */
+.tw-c .tw-chipb { min-height: 32px; padding: 0 var(--sp-2) 0 var(--sp-2); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline-strong); color: var(--ink); font-weight: 500; }
+.tw-c .tw-chipb > svg:first-child { color: var(--ink-2); }
+.tw-c-kind .tw-chipb { min-height: 40px; padding: 0 var(--sp-3); }
+/* a menu at the sheet's right edge opens leftwards, inside the sheet */
+.tw-c-kind .tw-menu, .tw-c-runs .tw-menu, .tw-c-stop .tw-c-seat .tw-menu { left: auto; right: 0; transform-origin: top right; }
+.tw-c-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.tw-c-sp { flex: 1 1 auto; }
+.tw-c-lbl { color: var(--muted); font-size: var(--fs-sm); }
+.tw-c-runs { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.tw-c-runs .r14-pp-trigger { min-height: 32px; width: auto; }
+.tw-c-leave { margin: 0; }
+/* the plan: the stops side by side, each a quiet card; three or four, as the piece asks */
+.tw-c-plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(236px, 1fr)); gap: var(--sp-3); align-items: start; }   /* four stops (with the cover) fit the 1040 sheet */
+.tw-c-stop { display: grid; gap: var(--sp-2); min-width: 0; padding: var(--sp-3); border-radius: var(--radius-sm); background: var(--soft); }
+[data-theme="dark"] .tw-c-stop { background: var(--surface-2); }
+.tw-c-stop-h { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-height: 32px; }   /* a long seat question drops under the word in a narrow stop */
+.tw-c-stop-h > .co-kic { width: 28px; height: 28px; border-radius: var(--radius-xs); }
+.tw-c-stop-h > b { flex: 1 1 auto; min-width: 0; font: 600 var(--fs-md)/1.2 var(--font); }
+.tw-c-seat { display: inline-grid; }
+.tw-c-seat .tw-chipb { gap: var(--sp-1); white-space: nowrap; }
+.tw-c-seat .tw-chipb .avatar { width: 22px; height: 22px; font-size: var(--fs-xs); }
+.tw-c-chanlbl { font: 500 var(--fs-sm)/1.2 var(--font); color: var(--ink-2); }
+/* the strip in a card a third wide: the week as one grid, never a sideways scroll; the "another day" picker last */
+.tw-c-stop .tw-days { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; overflow: visible; margin: 0; padding: 0; }
+.tw-c-stop .tw-day { width: auto; height: 52px; padding: var(--sp-1) 0; border-color: var(--hairline); }
+.tw-c-stop .tw-day-w { font-size: var(--fs-xs); text-transform: none; letter-spacing: 0; }   /* the scale's floor, 12; "Wed" fits a 28 px cell, "WED" would not */
+.tw-c-stop .tw-day-n { font-size: var(--fs-sm); }
+.tw-c-stop .tw-other .co-dp-b { width: 100%; min-height: 52px; height: 52px; border-color: var(--hairline); }
+.tw-c-hours { display: grid; gap: var(--sp-1); }
+.tw-c-hours .tw-hours-row { min-height: 40px; gap: var(--sp-2) var(--sp-3); }
+.tw-c-hours .tw-range { min-height: 40px; background: var(--surface); border-color: var(--hairline); }
+.tw-c-hours .tw-rsel { min-height: 40px; }
+.tw-c-hour { display: inline-flex; width: fit-content; }
+.tw-c-line { margin: 0; font: 400 var(--fs-xs)/1.4 var(--font); color: var(--muted); }
+/* the cover: a dashed line until somebody wants one */
+.tw-c-cover { display: flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-3); border: 1.5px dashed var(--hairline-strong); border-radius: var(--radius-xs); background: none; color: var(--muted); font: 400 var(--fs-sm)/1.3 var(--font); text-align: left; cursor: pointer; }
+.tw-c-cover > b { color: var(--ink-2); font-weight: 600; }
+.tw-c-cover > svg { color: var(--ink-2); flex: none; }
+@media (hover: hover) { .tw-c-cover:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); } }
+.tw-c-cover:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* the brief: the boxes in a row, the window's tinted cards, plain boxes inside (the words go up with Create) */
+.tw-c-brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); }
+.tw-c-bx { display: grid; gap: var(--sp-2); padding: var(--sp-3); }
+.tw-c-bx .co-main-lbl small { margin-inline-start: var(--sp-1); font: 400 var(--fs-xs)/1.2 var(--font); color: var(--muted); }
+.tw-c-ta { box-shadow: none; background: color-mix(in srgb, var(--surface) 55%, transparent); margin: 0; width: 100%; min-height: 72px; padding: var(--sp-2); font-size: var(--fs-sm); }
+.tw-c-ta:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.tw-c .tw-part.tw-f-bad, .tw-c .tw-c-chan.tw-f-bad { box-shadow: 0 0 0 2px var(--ring); border-radius: var(--radius-sm); }
+.tw-draft-more { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 32px; font: 500 var(--fs-sm)/1.3 var(--font); color: var(--ink-2); }
+/* the foot: what the press does, Cancel, the one ruby button — pinned at the sheet's bottom while it scrolls */
+.tw-c-foot { position: sticky; bottom: calc(-1 * var(--sp-5)); z-index: 2; display: flex; align-items: center; gap: var(--sp-3); margin: 0 calc(-1 * var(--sp-6)) calc(-1 * var(--sp-5)); padding: var(--sp-3) var(--sp-6); background: var(--surface); border-top: 1px solid var(--hairline); }
+.tw-c-say { flex: 1 1 auto; min-width: 0; font: 400 var(--fs-sm)/1.4 var(--font); color: var(--muted); }
+.tw-c-say b { font-weight: 600; color: var(--ink); }
+.tw-c-say .tw-f-err { font-size: var(--fs-sm); }
+.tw-draft-go { min-height: 44px; padding: 0 var(--sp-5); }
+@media (prefers-reduced-motion: reduce) { .tw-c, .tw-c-win .co-scrim, .co-win.out .tw-c { animation: none; } }
+/* a phone: the sheet is the screen; everything one under the other */
+@media (max-width: 640px) {
+  .tw-c-win { place-items: stretch; }
+  .tw-c { width: 100%; max-height: none; height: 100dvh; border-radius: 0; padding: var(--sp-3) var(--sp-4) 0; gap: var(--sp-3); }
+  .tw-c-plan, .tw-c-brief { grid-template-columns: minmax(0, 1fr); }
+  .tw-c-foot { margin: auto calc(-1 * var(--sp-4)) 0; padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px)); bottom: 0; }
+  .tw-c-say { display: none; }
+  .tw-draft-go { flex: 1; }
+}
+/* the brief's cards wear the window's tints: the ТЗ in the edit's colour, the script in the shoot's, the copy in the artwork's */
+.tw-c-bx { --bk: var(--ink-3); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--bk) 8%, var(--surface)); }
+[data-theme="dark"] .tw-c-bx { background: color-mix(in srgb, var(--bk) 14%, var(--surface)); }
+.tw-c-bx[data-field="tz"] { --bk: var(--kind-cut); } .tw-c-bx[data-field="script"] { --bk: var(--kind-shoot); } .tw-c-bx[data-field="description"] { --bk: var(--kind-art); }
+.tw-c-bx > .co-main-lbl { display: inline-flex; align-items: center; gap: var(--sp-2); font-weight: 600; color: var(--ink); }
+.tw-c-bx > .co-main-lbl > svg { flex: none; stroke-width: 1.75; color: var(--bk); }
+/* the Runs-it picker's small face (PersonPick's own 10.5 px initials) sits on the scale's floor inside the sheet */
+.tw-c-runs .avatar { font-size: var(--fs-xs); }
+
+/* ==== 13 Nov 2026, the owner, on the sheet: the kind big, the channel and who films one press each, no hour of going
+   out, no Runs it, three boxes (ТЗ · Script · Reference). ==== */
+/* the kinds: big tiles, the chosen one in the ink */
+.tw-c-kinds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.tw-c-kindb { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 56px; padding: 0 var(--sp-4) 0 var(--sp-3); border: 0; border-radius: var(--radius-sm); background: var(--soft); color: var(--ink); font: 600 var(--fs-md)/1.2 var(--font); cursor: pointer; }
+[data-theme="dark"] .tw-c-kindb { background: var(--surface-2); }
+.tw-c-kindb > svg { color: var(--ink-2); flex: none; }
+.tw-c-kindb.on { background: var(--ink); color: var(--surface); }
+.tw-c-kindb.on > svg { color: inherit; }
+.tw-c-kindb:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (hover: hover) { .tw-c-kindb:not(.on):hover { background: color-mix(in srgb, var(--ink) 8%, var(--soft)); } }
+.tw-c-tgtypes .tw-c-kindb { min-height: 44px; }
+/* the channels: a row of chips, the chosen one in the ink */
+.tw-c-chans { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.tw-c-chanb { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 40px; padding: 0 var(--sp-3) 0 var(--sp-2); border: 0; border-radius: var(--radius-pill); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline-strong); color: var(--ink); font: 500 var(--fs-sm)/1.2 var(--font); cursor: pointer; }
+.tw-c-chanb > svg { color: var(--ink-2); flex: none; }
+.tw-c-chanb.on { background: var(--ink); color: var(--surface); box-shadow: none; font-weight: 600; }
+.tw-c-chanb.on > svg { color: inherit; }
+.tw-c-chanb:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.tw-c-chans.tw-f-bad { box-shadow: 0 0 0 2px var(--ring); border-radius: var(--radius-sm); }
+/* a seat: the crew as faces, one press each; everybody else behind one chip */
+.tw-c-faces { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.tw-c-face { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; padding: var(--sp-1) var(--sp-1) var(--sp-1); border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink-2); font: 500 var(--fs-xs)/1.2 var(--font); cursor: pointer; }
+.tw-c-face .avatar { width: 36px; height: 36px; font-size: var(--fs-sm); }
+.tw-c-face.on { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 2px var(--ink); }
+.tw-c-face:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (hover: hover) { .tw-c-face:not(.on):hover { background: var(--surface); } }
+.tw-c-seat-more .tw-chipb { min-height: 36px; }
+@media (max-width: 640px) { .tw-c-kindb { min-height: 48px; flex: 1 1 auto; justify-content: center; } }
+/* the sheet fits 1440 × 900 with the kinds and the channels in it: a little tighter everywhere */
+.tw-c { gap: var(--sp-3); }
+.tw-c-kindb { min-height: 48px; }
+.tw-c-chanb { min-height: 36px; }
+.tw-c-ta { min-height: 60px; }
+.tw-c-bx { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
+/* 13 Nov, later, the owner: no sentence under a stop or in the foot; the foot holds a refusal only */
+.tw-c-say:empty { display: none; }
+.tw-c-stop .tw-day:disabled { opacity: .55; }
+/* with nothing said, Cancel and Create stand at the foot's right (a refusal, when there is one, takes the room on the left) */
+.tw-c-foot { justify-content: flex-end; }
+
+/* ==== 14 Nov 2026, the owner, on the sheet: a title; no "…"; the channels on one line that scrolls under a hidden bar;
+   the kinds as tabs, hidden when there is one; "Else" as a face at the row's end; the hours on iOS drums; the brief
+   first, the stops after. ==== */
+.tw-c-head { display: flex; align-items: center; gap: var(--sp-3); }
+.tw-c-h { flex: 1 1 auto; margin: 0; font: 600 var(--fs-xl)/1.25 var(--font); letter-spacing: 0; }
+.tw-c-head .co-x { width: 40px; height: 40px; flex: none; background: none; color: var(--ink-2); border-radius: var(--radius-sm); }
+@media (hover: hover) { .tw-c-head .co-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); } }
+/* one line of channels: it scrolls sideways under no bar, with a fade at its end to say there is more */
+.tw-c-chans { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 0; scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent); mask-image: linear-gradient(to right, black calc(100% - 40px), transparent); }
+.tw-c-chans::-webkit-scrollbar { display: none; }
+.tw-c-chanb { flex: none; scroll-snap-align: start; }
+/* the kinds as tabs: one segmented control, the chosen tab the surface on the soft ground */
+.tw-c-kinds { display: inline-flex; flex-wrap: nowrap; gap: 2px; padding: 3px; border-radius: var(--radius-sm); background: var(--soft); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+[data-theme="dark"] .tw-c-kinds { background: var(--surface-2); }
+.tw-c-kindb { min-height: 40px; padding: 0 var(--sp-3); border-radius: calc(var(--radius-sm) - 3px); background: none; font-weight: 500; flex: none; }
+.tw-c-kindb > svg { width: 18px; height: 18px; }
+.tw-c-kindb.on { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow); }
+[data-theme="dark"] .tw-c-kindb.on { background: color-mix(in srgb, var(--white) 14%, var(--surface)); }
+.tw-c-kindb.on > svg { color: var(--ink); }
+@media (hover: hover) { .tw-c-kindb:not(.on):hover { background: color-mix(in srgb, var(--ink) 6%, transparent); } }
+/* "Else": a face-shaped button at the end of the faces, its menu grown from it */
+.tw-c-seat-more .tw-chipb { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; min-height: 0; padding: var(--sp-1); background: none; box-shadow: none; color: var(--ink-2); font: 500 var(--fs-xs)/1.2 var(--font); }
+.tw-c-seat-more .tw-chipb .tw-chip-c { display: none; }
+.tw-c-seat-more .tw-chipb .avatar { width: 36px; height: 36px; font-size: var(--fs-sm); }
+.tw-c-seat-more.on .tw-chipb { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 2px var(--ink); border-radius: var(--radius-sm); }
+.tw-c-face-plus { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1.5px dashed var(--hairline-strong); color: var(--ink-2); }
+.tw-c-seat-more .tw-menu { left: 0; right: auto; transform-origin: top left; }
+/* the hours: the box, then the drums — iOS-like, the chosen line in the ink with a soft band behind it */
+.tw-wheel-box { display: grid; gap: var(--sp-2); }
+.tw-wheel-btn { justify-content: flex-start; gap: var(--sp-2); cursor: pointer; font: 600 var(--fs-md)/1 var(--font); font-variant-numeric: tabular-nums; }
+.tw-wheel-val small { margin-inline-start: var(--sp-2); font: 500 var(--fs-sm)/1 var(--font); color: var(--muted); }
+.tw-wheel { display: grid; gap: var(--sp-2); padding: var(--sp-2); border-radius: var(--radius-sm); background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
+.tw-wheel-drums { display: grid; grid-template-columns: auto 1fr auto 1fr; align-items: center; gap: var(--sp-2); }
+.tw-wheel-lb { font: 500 var(--fs-xs)/1.2 var(--font); color: var(--muted); }
+.tw-wheel .tw-wheel-i { display: grid; place-items: center; height: 36px; font: 500 var(--fs-md)/1 var(--font); font-variant-numeric: tabular-nums; color: var(--muted); }
+.tw-wheel .tw-wheel-i.on { color: var(--ink); font-weight: 700; }
+.tw-wheel-done { justify-self: end; }
+/* the two scrolling rows keep their height when the sheet is a fixed-height grid (a phone): a track with an overflow
+   item may be squeezed to nothing otherwise */
+.tw-c-chans { min-height: 44px; }
+.tw-c-kinds { min-height: 46px; }
+
+/* ==== 14 Nov 2026, later, the owner: no "Else"; the Telegram types across the whole width; an ad's stops are the
+   shoot and the edit, with who is in it; every card's rows on one line (one grid of rows shared by the cards);
+   the empty hours box at half strength. ==== */
+.tw-c-plan { grid-auto-rows: auto; }
+.tw-c-stop { grid-row: span 4; grid-template-rows: subgrid; row-gap: var(--sp-2); align-items: start; }
+.tw-c-rowgap { display: block; min-height: 0; }
+.tw-c-faces { align-items: flex-start; min-height: 60px; }
+.tw-c-cast { min-height: 0; }
+.tw-wheel-btn.is-empty { opacity: .55; }
+.tw-c-tgtypes { display: flex; width: 100%; }
+.tw-c-tgtypes .tw-c-kindb { flex: 1 1 0; justify-content: center; min-height: 48px; font-size: var(--fs-md); }
+@media (max-width: 640px) { .tw-c-stop { grid-row: auto; grid-template-rows: none; } .tw-c-rowgap { display: none; } }
+/* an ad's cast is one card of many faces: it keeps the cards' height but lays its faces in its own rows, so the
+   other cards' rows are not stretched by it */
+.tw-c-castst { grid-template-rows: none; align-content: start; }
+.tw-c-cast .tw-c-face { min-width: 52px; }
+.tw-c-cast .tw-c-face .avatar { width: 32px; height: 32px; }
+
+/* ==== 15 Nov 2026, the owner picked C of the three: the hours are two fields, Starts → Ends, each with a
+   five-minute stepper; the empty pair at half strength until a start is given ==== */
+.tw-tf { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--sp-2); align-items: center; }
+.tw-tf.is-empty { opacity: .55; }
+.tw-tf:focus-within { opacity: 1; }
+.tw-tf-f { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 44px; padding: 0 var(--sp-1) 0 var(--sp-3); border: 1px solid var(--hairline); border-radius: var(--radius-sm); background: var(--surface); }
+.tw-tf-f:focus-within { border-color: var(--ink); }
+.tw-tf-in { width: 100%; min-width: 0; border: 0; background: none; padding: 0; color: var(--ink); font: 600 var(--fs-lg)/1 var(--font); font-variant-numeric: tabular-nums; }
+.tw-tf-in:focus { outline: none; }
+.tw-tf-in::placeholder { color: var(--muted); font-weight: 500; }
+.tw-tf-st { display: grid; gap: 2px; }
+.tw-tf-st button { display: grid; place-items: center; width: 28px; height: 19px; padding: 0; border: 0; border-radius: 4px; background: var(--soft); color: var(--ink-2); cursor: pointer; }
+.tw-tf-st button:hover { background: var(--hairline); }
+.tw-tf-st button:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.tw-tf-arrow { color: var(--muted); font: 500 var(--fs-md)/1 var(--font); }
+[data-theme="dark"] .tw-tf-f { background: var(--surface-2); }
+[data-theme="dark"] .tw-tf-st button { background: var(--hairline); }
+@media (pointer: coarse) { .tw-tf-f { min-height: 48px; } .tw-tf-st button { width: 34px; height: 22px; } }
+
+/* ==== 15 Nov 2026, the owner: the head is the name (one line, × at its end); the Cover box behind a dashed tile;
+   several pieces from one shoot — the scripts and the faces one under the other, "one more" a dashed line ==== */
+.tw-c-headline { gap: var(--sp-2); }
+.tw-c-headline .tw-c-name-in { min-height: 52px; font: 600 var(--fs-xl)/1.25 var(--font); }
+.tw-c-headline .tw-c-name-in::placeholder { color: var(--muted); font-weight: 500; }
+.tw-c-bx-h { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); min-height: 24px; }
+.tw-c-bx-x { display: grid; place-items: center; width: 28px; height: 28px; margin: -2px -4px -2px 0; padding: 0; border: 0; border-radius: var(--radius-xs); background: none; color: var(--muted); cursor: pointer; }
+@media (hover: hover) { .tw-c-bx-x:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); } }
+.tw-c-bx-x:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.tw-c-addbox { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-1); min-height: 120px; padding: var(--sp-3); border: 1.5px dashed var(--hairline-strong); background: none; color: var(--muted); font: 500 var(--fs-sm)/1.3 var(--font); cursor: pointer; }
+.tw-c-addbox > svg { color: var(--ink-2); }
+.tw-c-addbox > b { color: var(--ink-2); font-weight: 600; font-size: var(--fs-md); }
+@media (hover: hover) { .tw-c-addbox:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); } }
+.tw-c-addbox:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.tw-c-series-line > span, .tw-c-addpiece > span { color: var(--muted); font-weight: 400; }
+.tw-c-series { display: grid; gap: var(--sp-3); }
+.tw-c-series-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-1) var(--sp-3); padding: 0 var(--sp-1); }
+.tw-c-series-h > b { font: 600 var(--fs-md)/1.3 var(--font); color: var(--ink); }
+.tw-c-series-h > span { font: 400 var(--fs-sm)/1.3 var(--font); color: var(--muted); }
+.tw-c-piece { --bk: var(--kind-shoot); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "head head" "text faces"; align-items: start; column-gap: var(--sp-4); }
+.tw-c-piece-h { grid-area: head; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.tw-c-piece > .tw-c-ta { grid-area: text; }
+.tw-c-piece-faces { grid-area: faces; min-height: 0; align-content: start; }
+@media (max-width: 760px) { .tw-c-piece { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "text" "faces"; } }
+/* a dashed line that adds something (the series, one more piece): the cover line's look */
+.tw-c-dash { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-3); border: 1.5px dashed var(--hairline-strong); border-radius: var(--radius-xs); background: none; color: var(--muted); font: 500 var(--fs-sm)/1.3 var(--font); text-align: left; cursor: pointer; }
+.tw-c-dash > b { color: var(--ink-2); font-weight: 600; }
+.tw-c-dash > svg { color: var(--ink-2); flex: none; }
+.tw-c-dash:disabled { opacity: .55; cursor: default; }
+@media (hover: hover) { .tw-c-dash:not(:disabled):hover { background: color-mix(in srgb, var(--ink) 4%, transparent); } }
+.tw-c-dash:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ==== 15 Nov 2026, the owner: the task window in the sheet's look — the same soft cards, the same boxes, the
+   buttons centred where a button stands alone. Behaviour unchanged; every rule is scoped to the window. ==== */
+/* the step box: the soft ground, no ring, the sheet's radius */
+.r14-tw .co-act { padding: var(--sp-4); gap: var(--sp-4); border-radius: var(--radius-sm); background: var(--soft); box-shadow: none; }
+[data-theme="dark"] .r14-tw .co-act { background: var(--surface-2); }
+.r14-tw .r14-act-h > .co-kic { width: 28px; height: 28px; border-radius: var(--radius-xs); }
+.r14-tw .r14-act-h > h3 { font: 600 var(--fs-md)/1.3 var(--font); }
+/* a button row that stands on its own line is centred; a row beside a person or a drop zone keeps its place */
+.r14-tw .co-act > .co-btns, .r14-tw .co-act > .ns-inline > .co-btns, .r14-tw .co-act .co-btns.tw-send-row, .r14-tw .co-act .tw-review-btns { justify-content: center; }
+.r14-tw .co-act > .co-btn-p, .r14-tw .co-act .hi-inline .hi-go, .r14-tw .co-act .hi-inline > .co-btn-p { justify-self: center; margin-inline: auto; min-width: 240px; }
+.r14-tw .co-act .ns-inline .st-go { width: auto; min-width: 240px; justify-self: center; }
+.r14-tw .co-act .hi-drop.hi-drop-big { background: var(--surface); }
+/* the plan: every stop a soft card with the kind's tile, as on the new-task sheet (no tint of its own) */
+.r14-tw .tw-pr { background: var(--soft); border-radius: var(--radius-sm); }
+[data-theme="dark"] .r14-tw .tw-pr { background: var(--surface-2); }
+.r14-tw .tw-pr-line { min-height: 48px; padding: var(--sp-2) var(--sp-4); grid-template-columns: 28px minmax(0, 1fr); gap: var(--sp-1) var(--sp-3); }
+.r14-tw .tw-pr-line > .co-kic { width: 28px; height: 28px; border-radius: var(--radius-xs); }
+.r14-tw .tw-pr-line > .co-kic svg { width: 14px; height: 14px; }
+.r14-tw .tw-pr-w { font: 600 var(--fs-md)/1.3 var(--font); }
+.r14-tw .tw-pr-vals { font-size: var(--fs-sm); }
+.r14-tw .tw-pr-ghost { background: none; border: 1.5px dashed var(--hairline-strong); }
+/* the brief: its parts side by side as the sheet's boxes — ТЗ, Script, Post copy — each on its kind's tint */
+.r14-tw .r14-brief-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-3); padding: 0; background: none; box-shadow: none; }
+.r14-tw .r14-brief-box > .co-main-part { --bk: var(--ink-3); margin: 0; padding: var(--sp-3); border: 0; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--bk) 8%, var(--surface)); }
+[data-theme="dark"] .r14-tw .r14-brief-box > .co-main-part { background: color-mix(in srgb, var(--bk) 14%, var(--surface)); }
+.r14-tw .r14-brief-box > .co-main-part[data-field="tz"] { --bk: var(--kind-cut); }
+.r14-tw .r14-brief-box > .co-main-part[data-field="script"] { --bk: var(--kind-shoot); }
+.r14-tw .r14-brief-box > .co-main-part[data-field="description"] { --bk: var(--kind-art); }
+.r14-tw .r14-brief-box > .co-main-part > .co-main-lbl { display: inline-flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); font: 600 var(--fs-sm)/1.3 var(--font); color: var(--ink); }
+.r14-tw .r14-brief-box > .co-main-part > .co-main-lbl > svg { flex: none; stroke-width: 1.75; color: var(--bk); }
+.r14-tw .r14-brief-box .tw-long-txt, .r14-tw .r14-brief-box .tw-long-in { background: var(--surface); border-radius: var(--radius-xs); }
+/* the reference: the same soft card */
+.r14-tw .tw-refcard { padding: var(--sp-3); border-radius: var(--radius-sm); background: var(--soft); box-shadow: none; }
+[data-theme="dark"] .r14-tw .tw-refcard { background: var(--surface-2); }
+/* a window with nothing on the left (no material, no reference) is not half empty: the plan and the brief share
+   the width, the history under them */
+@media (min-width: 1000px) {
+  .r14-tw-b.co-p-body.tw-b:not(.solo):not(:has(.tw-left > :not([hidden]))) { grid-template-columns: minmax(0, 1fr); }
+  .r14-tw-b.co-p-body.tw-b:not(.solo):not(:has(.tw-left > :not([hidden]))) > .tw-right { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .r14-tw-b.co-p-body.tw-b:not(.solo):not(:has(.tw-left > :not([hidden]))) > .tw-right > .tw-hist { grid-column: 1 / -1; }
+}
+/* the box's label row (the label beside its × ) keeps the label's look */
+.tw-c-bx-h > .co-main-lbl, .tw-c-piece-h > .co-main-lbl { display: inline-flex; align-items: center; gap: var(--sp-2); margin: 0; font-weight: 600; font-size: var(--fs-sm); color: var(--ink); }
+.tw-c-bx-h > .co-main-lbl > svg, .tw-c-piece-h > .co-main-lbl > svg { flex: none; stroke-width: 1.75; color: var(--bk); }
+/* the brief's boxes stand on their own: a box opened to type in neither widens nor lifts its neighbour */
+.r14-tw .r14-brief-box { align-items: start; }
+.r14-tw .r14-brief-box > .co-main-part { min-width: 0; }
+/* the plan and the brief share the width only as a grid (the column is a flex column since 12 Nov); the open strip
+   starts at the word column — 16 in, the 28 tile, 12 */
+@media (min-width: 1000px) {
+  .r14-tw-b.co-p-body.tw-b:not(.solo):not(:has(.tw-left > :not([hidden]))) > .tw-right { display: grid; }
+}
+.r14-tw .tw-pr-open .tw-pr-ed { padding-left: calc(var(--sp-4) + 28px + var(--sp-3)); }
+
+/* ==== 15 Nov 2026, later, the owner: tasks from one shoot — Task 2, Task 3 … as blocks (script · ТЗ · face) ==== */
+.tw-c-piece { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "head head" "script tz" "faces faces"; column-gap: var(--sp-3); }
+.tw-c-piece-f { display: grid; gap: var(--sp-1); min-width: 0; }
+.tw-c-piece-f:nth-of-type(1) { grid-area: script; }
+.tw-c-piece-f:nth-of-type(2) { grid-area: tz; }
+.tw-c-piece-lb { font: 600 var(--fs-xs)/1.3 var(--font); color: var(--ink-2); }
+.tw-c-piece-lb small { margin-inline-start: var(--sp-1); font: 400 var(--fs-xs)/1.3 var(--font); color: var(--muted); }
+.tw-c-piece > .tw-c-ta { grid-area: auto; }
+.tw-c-piece-faces { grid-area: faces; }
+.tw-c-piece.tw-f-bad { box-shadow: 0 0 0 2px var(--ring); }
+.tw-c-addpiece > span { color: var(--muted); font-weight: 500; }
+@media (max-width: 760px) { .tw-c-piece { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "script" "tz" "faces"; } }
+.tw-c-piece-first { grid-template-areas: "head" "faces"; grid-template-columns: minmax(0, 1fr); }
+/* the series (the owner, 16 Nov 2026): the faces are one line that scrolls sideways under no bar; a text keeps its
+   height and scrolls inside under no bar */
+.tw-c-piece .tw-c-faces { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, var(--near-black) calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, var(--near-black) calc(100% - 40px), transparent); padding-right: 40px; }
+.tw-c-piece .tw-c-faces::-webkit-scrollbar { display: none; }
+.tw-c-piece .tw-c-ta, .tw-c-bx .tw-c-ta { height: 84px; max-height: 84px; resize: none; overflow-y: auto; scrollbar-width: none; }
+.tw-c-piece .tw-c-ta::-webkit-scrollbar, .tw-c-bx .tw-c-ta::-webkit-scrollbar { display: none; }
+/* the day strip: a day that is gone wears light strokes; today is plain, its number bold — no dot */
+.tw-day.is-past { position: relative; }
+.tw-day.is-past::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--hairline-strong); -webkit-mask: url('/hatch.svg') 0 0 / 6px 6px; mask: url('/hatch.svg') 0 0 / 6px 6px; opacity: .55; pointer-events: none; }
+.tw-day.is-past > * { position: relative; }
+.tw-day.today .tw-day-w::after { content: none; }
+.tw-day.today .tw-day-n { font-weight: 700; color: var(--ruby); }
+/* a step that is one button (Publish): the head and the button share one line — no empty box around a lone button */
+.r14-tw .co-act:has(> .r14-act-h):not(:has(> :not(.r14-act-h):not(.co-btns))) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-3) var(--sp-4); }
+.r14-tw .co-act:has(> .r14-act-h):not(:has(> :not(.r14-act-h):not(.co-btns))) > .r14-act-h { flex: 1 1 320px; min-width: 0; }
+.r14-tw .co-act:has(> .r14-act-h):not(:has(> :not(.r14-act-h):not(.co-btns))) > .co-btns { flex: none; justify-content: flex-end; }
+.r14-tw .co-act:has(> .r14-act-h):not(:has(> :not(.r14-act-h):not(.co-btns))) > .co-btns > .co-btn-p { min-width: 0; margin: 0; }

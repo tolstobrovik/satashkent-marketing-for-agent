@@ -1,0 +1,344 @@
+/* Settings — "Advanced settings" (12 Nov 2026, design-variants/admin-tz.md).
+   One list, a row a setting, a press opens its own page. The rows are the
+   menus' Settings group (styles-nav.css): 44 px, a 30 px grey tile at stroke
+   1.75, the name 500, a value in --muted, a chevron; cards on the page ground,
+   no line between rows. Tokens only; every class co-st-…, Coach look only. */
+html[data-look="coach"] .co-st {
+  --st-card: var(--surface);
+  --st-edge: inset 0 0 0 1px var(--hairline);
+  --st-press: color-mix(in srgb, var(--near-black) 8%, var(--st-card));
+  --st-hover: color-mix(in srgb, var(--near-black) 4%, var(--st-card));
+  --st-row-h: 44px;
+  --st-tile: 30px;
+  --st-label-x: calc(var(--sp-4) + var(--st-tile) + var(--sp-3));
+  display: block; max-width: 640px; margin: 0 0 var(--sp-6);
+}
+html[data-look="coach"][data-theme="dark"] .co-st, [data-theme="dark"] html[data-look="coach"] .co-st {
+  --st-card: var(--surface-2);
+  --st-press: color-mix(in srgb, var(--white) 11%, var(--st-card));
+  --st-hover: color-mix(in srgb, var(--white) 6%, var(--st-card));
+}
+html[data-look="coach"] .co-st.co-st-wide { max-width: none; }
+
+/* ---- the way back and the headline ---- */
+html[data-look="coach"] .co-st-back {
+  display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; margin: calc(-1 * var(--sp-2)) 0 0 calc(-1 * var(--sp-1)); padding: 0 var(--sp-2) 0 var(--sp-1);
+  border-radius: var(--radius-xs); color: var(--muted); font-size: var(--fs-sm); font-weight: 500; text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+html[data-look="coach"] .co-st-back:active { background: var(--st-press); }
+html[data-look="coach"] .co-st-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); margin: 0 0 var(--sp-4); }
+html[data-look="coach"] .co-st-head .co-title { flex: 1 1 auto; min-width: 0; margin: 0; outline: none; }
+html[data-look="coach"] .co-st-sub { margin: calc(-1 * var(--sp-2)) 0 var(--sp-4); color: var(--muted); font-size: var(--fs-sm); line-height: 1.45; max-width: 60ch; }
+
+/* ---- a group: its name on the ground, its rows on one card ---- */
+html[data-look="coach"] .co-st-grp { margin: 0 0 var(--sp-4); }
+html[data-look="coach"] .co-st-gh { display: flex; align-items: flex-end; min-height: 32px; margin: 0; padding: 0 var(--sp-4) var(--sp-2); color: var(--muted); font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0; text-transform: none; }
+html[data-look="coach"] .co-st-card { position: relative; background: var(--st-card); border-radius: var(--radius-sm); box-shadow: var(--st-edge); overflow: clip; }
+html[data-look="coach"] .co-st-note { margin: var(--sp-2) var(--sp-4) 0; color: var(--muted); font-size: var(--fs-sm); line-height: 1.45; }
+html[data-look="coach"] .co-st-empty { margin: 0; padding: var(--sp-3) var(--sp-4); color: var(--muted); font-size: var(--fs-md); }
+
+/* ---- a row ---- */
+html[data-look="coach"] .co-st-row {
+  position: relative; display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: var(--st-row-h); padding: var(--sp-1) var(--sp-4); box-sizing: border-box;
+  border: 0; background: none; color: var(--ink); font: inherit; font-size: var(--fs-md); font-weight: 500; line-height: 1.3; letter-spacing: 0; text-align: left; text-decoration: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-look="coach"] .co-st-line { cursor: default; }
+html[data-look="coach"] :is(a.co-st-row, button.co-st-row):active { background: var(--st-press); }
+@media (hover: hover) { html[data-look="coach"] :is(a.co-st-row, button.co-st-row):hover { background: var(--st-hover); } }
+html[data-look="coach"] :is(.co-st-row, .co-st-back, .co-st-ib, .co-st-chip, .co-st-seg button):focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; border-radius: var(--radius-xs); }
+html[data-look="coach"] .co-st-row:disabled { cursor: default; opacity: 1; color: var(--muted); }
+html[data-look="coach"] .co-st-tile { display: inline-grid; place-items: center; width: var(--st-tile); height: var(--st-tile); flex: none; border-radius: 7px; background: var(--light-grey); color: var(--ink-2); }
+[data-theme="dark"] html[data-look="coach"] .co-st-tile, html[data-look="coach"][data-theme="dark"] .co-st-tile { background: color-mix(in srgb, var(--white) 10%, var(--st-card)); color: var(--ink); }
+html[data-look="coach"] .co-st-tile svg { stroke-width: 1.75; }
+html[data-look="coach"] .co-st-t { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+html[data-look="coach"] .co-st-t small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-sm); font-weight: 400; line-height: 1.35; }
+html[data-look="coach"] .co-st-v { flex: none; max-width: 45%; color: var(--muted); font-size: var(--fs-md); font-weight: 400; text-align: right; font-variant-numeric: tabular-nums; }
+html[data-look="coach"] .co-st-v.on { display: inline-flex; align-items: center; gap: var(--sp-1); color: var(--ink); }
+html[data-look="coach"] .co-st-chev { flex: none; margin-right: -3px; color: var(--muted); }
+
+/* ---- the house switch (the menus': ink when on, --muted off — 3:1 on the card) ---- */
+html[data-look="coach"] .co-st-sw { position: relative; display: inline-block; width: 34px; height: 20px; flex: none; border-radius: 10px; background: var(--muted); transition: background-color 160ms ease; }
+html[data-look="coach"] .co-st-sw i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--white); box-shadow: 0 1px 2px color-mix(in srgb, var(--near-black) 25%, transparent); transition: transform 160ms var(--ease-out); }
+html[data-look="coach"] [aria-checked="true"] > .co-st-sw { background: var(--ink); }
+html[data-look="coach"] [aria-checked="true"] > .co-st-sw i { transform: translateX(14px); }
+
+/* ---- small buttons on a row: icon (44 square on touch, 36 on a desk) and text ---- */
+html[data-look="coach"] .co-st-ib {
+  display: inline-grid; place-items: center; width: 36px; height: 36px; flex: none; padding: 0; border: 0; border-radius: var(--radius-xs);
+  background: none; color: var(--ink-2); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+html[data-look="coach"] .co-st-ib:active { background: var(--st-press); }
+@media (hover: hover) { html[data-look="coach"] .co-st-ib:hover { background: var(--st-hover); color: var(--ink); } }
+html[data-look="coach"] .co-st-row .co-st-ib { margin-right: calc(-1 * var(--sp-2)); }
+html[data-look="coach"] .co-st-row .co-btn { flex: none; }
+html[data-look="coach"] .co-st-danger { color: var(--critical); }
+@media (pointer: coarse) {
+  html[data-look="coach"] .co-st-ib { width: 44px; height: 44px; }
+  html[data-look="coach"] .co-st .co-btn-sm { min-height: 44px; }
+}
+
+/* ---- "?" ---- */
+html[data-look="coach"] .co-st-help { position: relative; display: inline-flex; flex: none; }
+html[data-look="coach"] .co-st-pop {
+  position: absolute; z-index: 30; top: calc(100% + var(--sp-1)); right: 0; width: min(360px, calc(100vw - 2 * var(--sp-4))); box-sizing: border-box; padding: var(--sp-4) var(--sp-4) var(--sp-4);
+  background: var(--surface); color: var(--ink); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg), var(--st-edge); font-size: var(--fs-sm); font-weight: 400; line-height: 1.5; text-align: left; cursor: auto;
+  transform-origin: top right; animation: co-st-pop 160ms var(--ease-out);
+}
+[data-theme="dark"] html[data-look="coach"] .co-st-pop, html[data-look="coach"][data-theme="dark"] .co-st-pop { background: var(--surface-2); }
+html[data-look="coach"] .co-st-pop-x { position: absolute; top: var(--sp-1); right: var(--sp-1); }
+html[data-look="coach"] .co-st-pop :is(p, ol, ul) { margin: 0 var(--sp-6) var(--sp-2) 0; padding-left: 0; }
+html[data-look="coach"] .co-st-pop :is(ol, ul) { padding-left: var(--sp-4); }
+html[data-look="coach"] .co-st-pop li + li { margin-top: var(--sp-1); }
+html[data-look="coach"] .co-st-pop code { font: inherit; font-weight: 600; overflow-wrap: anywhere; }
+html[data-look="coach"] .co-st-pop :is(p, ol, ul):last-child { margin-bottom: 0; }
+@keyframes co-st-pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+
+/* ---- a segmented choice (Off · Optional · Required, Today · 7 days · 30 days) ---- */
+html[data-look="coach"] .co-st-seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: var(--radius-sm); background: var(--track); }
+html[data-look="coach"] .co-st-seg button {
+  min-height: 36px; padding: 0 var(--sp-4); border: 0; border-radius: calc(var(--radius-sm) - 2px); background: none; color: var(--ink-2);
+  font: inherit; font-size: var(--fs-sm); font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+html[data-look="coach"] .co-st-seg button[aria-checked="true"], html[data-look="coach"] .co-st-seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px color-mix(in srgb, var(--near-black) 18%, transparent); }
+[data-theme="dark"] html[data-look="coach"] .co-st-seg button:is([aria-checked="true"], [aria-pressed="true"]), html[data-look="coach"][data-theme="dark"] .co-st-seg button:is([aria-checked="true"], [aria-pressed="true"]) { background: var(--surface-2); }
+@media (pointer: coarse) { html[data-look="coach"] .co-st-seg button { min-height: 44px; } }
+html[data-look="coach"] .co-st-pad { padding: var(--sp-4); }
+html[data-look="coach"] .co-st-pad + .co-st-pad { padding-top: 0; }
+
+/* ---- a form on a page (one channel; the sheets) ---- */
+html[data-look="coach"] .co-st-field { display: grid; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); }
+html[data-look="coach"] .co-st-field > label, html[data-look="coach"] .co-st-field > .co-st-fl { color: var(--ink); font-size: var(--fs-sm); font-weight: 600; }
+html[data-look="coach"] .co-st-field small { color: var(--muted); font-size: var(--fs-sm); line-height: 1.45; }
+html[data-look="coach"] .co-st-field .input, html[data-look="coach"] .co-st-field .select { width: 100%; max-width: 100%; box-sizing: border-box; font-size: var(--fs-input, 16px); }
+html[data-look="coach"] .co-st-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: var(--sp-1); }
+html[data-look="coach"] .co-st-icons button { display: grid; place-items: center; height: 44px; border: 0; border-radius: var(--radius-xs); background: none; color: var(--ink-2); cursor: pointer; }
+html[data-look="coach"] .co-st-icons button[aria-checked="true"] { background: var(--ink); color: var(--surface); }
+html[data-look="coach"] .co-st-icons button:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+html[data-look="coach"] .co-st-foot {
+  position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2); margin: var(--sp-4) 0 0; padding: var(--sp-3) 0 calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  background: var(--bg); box-shadow: 0 -1px 0 var(--hairline);
+}
+html[data-look="coach"] .co-st-foot .co-st-n { margin-right: auto; color: var(--muted); font-size: var(--fs-sm); }
+html[data-look="coach"] .co-st-add { display: flex; gap: var(--sp-2); padding: var(--sp-2) var(--sp-4) var(--sp-3); }
+html[data-look="coach"] .co-st-add .input { flex: 1 1 auto; min-width: 0; font-size: var(--fs-input, 16px); }
+html[data-look="coach"] .co-st-err { margin: var(--sp-2) var(--sp-4); color: var(--critical); font-size: var(--fs-sm); }
+
+/* ---- a person ---- */
+html[data-look="coach"] .co-st-row .avatar { flex: none; }
+html[data-look="coach"] .co-st-face { display: inline-grid; place-items: center; width: var(--st-tile); height: var(--st-tile); flex: none; }
+
+/* ---- Changes: a day, its rows; a row unfolds to the whole line ---- */
+html[data-look="coach"] .co-st-day { position: sticky; top: 0; z-index: 2; margin: 0; padding: var(--sp-3) var(--sp-4) var(--sp-2); background: var(--bg); color: var(--muted); font-size: var(--fs-sm); font-weight: 600; }
+html[data-look="coach"] .co-st-log { align-items: flex-start; padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
+html[data-look="coach"] .co-st-log .co-st-when { flex: none; width: 44px; color: var(--muted); font-size: var(--fs-sm); font-weight: 400; font-variant-numeric: tabular-nums; line-height: 1.5; }
+html[data-look="coach"] .co-st-log .co-st-t { font-weight: 400; line-height: 1.5; }
+html[data-look="coach"] .co-st-log .co-st-t b { font-weight: 600; }
+/* two lines shut (one cut "Admin deleted the task: …" before the task's name — the point of the row); a press shows it all */
+html[data-look="coach"] .co-st-log[aria-expanded="false"] .co-st-t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+html[data-look="coach"] .co-st-log .co-st-more { display: block; margin-top: var(--sp-1); color: var(--muted); font-size: var(--fs-sm); }
+html[data-look="coach"] .co-st-tools { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-4); }
+html[data-look="coach"] .co-st-tools .select { width: auto; min-width: 0; flex: 1 1 160px; max-width: 240px; font-size: var(--fs-input, 16px); }
+
+/* ---- Pay: a tier ---- */
+html[data-look="coach"] .co-st-amt { flex: none; display: grid; justify-items: end; color: var(--ink); font-size: var(--fs-md); font-weight: 500; font-variant-numeric: tabular-nums; }
+html[data-look="coach"] .co-st-amt small { color: var(--muted); font-size: var(--fs-sm); font-weight: 400; }
+
+/* ---- the push between pages on a phone (desk: none). Reduced motion: a fade. ---- */
+@media (max-width: 640px) {
+  /* fill "backwards", never "both": a held transform makes the page the box of every fixed layer in it (sheets, the whiteboard's full screen) */
+  html[data-look="coach"] .co-st { animation: co-st-in 280ms var(--ease-drawer) backwards; }
+  html[data-look="coach"] .co-st.is-back { animation-name: co-st-back; }
+  html[data-look="coach"] .co-st-head { margin-bottom: var(--sp-4); }
+}
+@keyframes co-st-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes co-st-back { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes co-st-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  html[data-look="coach"] .co-st, html[data-look="coach"] .co-st.is-back { animation: co-st-fade 120ms ease both; }
+  html[data-look="coach"] .co-st-pop { animation: co-st-fade 120ms ease; }
+  html[data-look="coach"] :is(.co-st-sw, .co-st-sw i) { transition: none; }
+}
+
+/* ---- Pay (pages/settings/Pay.jsx) and Team structure (Structure.jsx) ----
+   A rung's row lets its two amounts wrap under the name when the column is
+   narrow (320 px, 200 % zoom); the rung's sheet is a form of stacked fields,
+   the band and the amounts two to a line; an error is said under its field.
+   The whiteboard stays inside the page: its field scrolls in itself. */
+html[data-look="coach"] .co-st-rung { flex-wrap: wrap; row-gap: var(--sp-1); padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+html[data-look="coach"] .co-st-rung .co-st-t { flex: 1 1 140px; }
+html[data-look="coach"] .co-st-rung .co-st-amt { flex: 0 1 auto; min-width: 0; text-align: right; }
+html[data-look="coach"] .co-st-rungform { display: grid; gap: var(--sp-4); }
+html[data-look="coach"] .co-st-rungform .co-st-field { padding: 0; align-content: start; }
+html[data-look="coach"] .co-st-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
+html[data-look="coach"] .co-st-field small.co-st-ferr { color: var(--critical); }
+html[data-look="coach"] .co-st-field .input[aria-invalid="true"] { border-color: var(--critical); }
+html[data-look="coach"] .co-st-wb { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+html[data-look="coach"] .co-st-wb .pill-group { max-width: 100%; flex-wrap: wrap; box-sizing: border-box; }
+
+/* ---- Changes (Changes.jsx) and How the board is used (Usage.jsx), build-admin1 ---- */
+html[data-look="coach"] .co-st-days { margin: 0 0 var(--sp-2); }
+/* the day label stays under the sticky top bar (66 px on a desk, 44 under 641), not behind it */
+html[data-look="coach"] .co-st-days .co-st-day { top: 66px; }
+@media (max-width: 640px) { html[data-look="coach"] .co-st-days .co-st-day { top: 44px; } }
+html[data-look="coach"] .co-st-logx { padding: 0 var(--sp-4) var(--sp-2) calc(44px + var(--sp-3)); animation: co-st-unfold 200ms var(--ease-out); }
+html[data-look="coach"] .co-st-logx .co-btn { min-height: 36px; }
+html[data-look="coach"] .co-st-moreb { margin: var(--sp-2) 0 var(--sp-4); }
+html[data-look="coach"] .co-st-span { margin: 0 0 var(--sp-2); }
+html[data-look="coach"] .co-st-who { flex-wrap: wrap; row-gap: 0; }
+html[data-look="coach"] .co-st-who .co-st-t { min-width: 9em; overflow-wrap: break-word; }
+html[data-look="coach"] .co-st-who .co-st-v { max-width: none; margin-left: auto; }
+/* a narrow phone: the value goes under the name, never squeezing it into syllables */
+@media (max-width: 420px) { html[data-look="coach"] .co-st-who .co-st-t { flex: 1 1 0; min-width: 0; } html[data-look="coach"] .co-st-who .co-st-v { flex-basis: 100%; margin: 0 0 var(--sp-1); padding-left: calc(var(--st-tile) + var(--sp-3)); text-align: left; font-size: var(--fs-sm); } }
+html[data-look="coach"] .co-st-fix { padding-top: var(--sp-3); padding-bottom: var(--sp-3); }
+html[data-look="coach"] .co-st-fix .co-st-t { font-weight: 400; line-height: 1.5; }
+html[data-look="coach"] .co-st-dl { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1); margin: var(--sp-6) 0 0; }
+@keyframes co-st-unfold { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (pointer: coarse) { html[data-look="coach"] .co-st-logx .co-btn { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) { html[data-look="coach"] .co-st-logx { animation: co-st-fade 120ms ease; } }
+
+/* ---- The brief and Roles (Brief.jsx, Roles.jsx): the rule over a field's
+   cards, and a page's hint raised to a sentence. On a phone the segmented
+   rule spans the column, three equal parts. ---- */
+html[data-look="coach"] .co-st-rule { margin: 0 0 var(--sp-4); }
+html[data-look="coach"] .co-st-hint { display: inline-block; }
+html[data-look="coach"] .co-st-hint::first-letter { text-transform: uppercase; }
+@media (max-width: 640px) {
+  html[data-look="coach"] .co-st-rule .co-st-seg { display: flex; flex-wrap: nowrap; }
+  html[data-look="coach"] .co-st-rule .co-st-seg button { flex: 1 1 0; min-width: 0; padding: 0 var(--sp-2); }
+}
+/* Roles: a page's switch carries its hint on a second line — room above and
+   below it, and the hint raised to a sentence like the page's own sub line. */
+html[data-look="coach"] .co-st-roomy .co-st-row { padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+html[data-look="coach"] .co-st-roomy .co-st-t small::first-letter { text-transform: uppercase; }
+/* The house switch at night (styles-nav.css .co-nv-sw): the knob is near black, so on a
+   light-grey "on" track it still reads — a white knob on it was nearly lost. */
+[data-theme="dark"] html[data-look="coach"] .co-st-sw i, html[data-look="coach"][data-theme="dark"] .co-st-sw i { background: var(--near-black); }
+/* ==== end The brief + Roles ==== */
+
+/* ---- Channels · Channel (pages/settings/Channels.jsx, Channel.jsx) ---- */
+html[data-look="coach"] .co-st-head a.co-btn { text-decoration: none; }
+html[data-look="coach"] .co-st-chrow .co-st-ib { color: var(--ink-2); }
+@media (hover: hover) { html[data-look="coach"] .co-st-chrow:hover .co-st-ib { color: var(--ink); } }
+html[data-look="coach"] .co-st-kind { padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+html[data-look="coach"] .co-st-kind .co-st-ok { flex: none; color: var(--ink); }
+html[data-look="coach"] .co-st-kind[aria-checked="false"] .co-st-ok { visibility: hidden; }
+html[data-look="coach"] .co-st-field label small { font-weight: 400; }
+html[data-look="coach"] .co-st-field .input.co-st-num { width: 120px; }
+html[data-look="coach"] .co-st-apart { margin: var(--sp-6) 0 0; }
+html[data-look="coach"] .co-st-apart .co-btn { margin-left: calc(-1 * var(--sp-4)); }
+html[data-look="coach"] .co-st-ask { margin: 0 0 var(--sp-2); color: var(--ink); font-size: var(--fs-md); line-height: 1.5; }
+html[data-look="coach"] .co-st-ask-sub { color: var(--muted); font-size: var(--fs-sm); }
+@media (pointer: coarse) { html[data-look="coach"] .co-st-head a.co-btn { min-height: 44px; } }
+html[data-look="coach"] .co-st-form .co-st-swrow { padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+/* on a phone the footer stands on the tab bar (styles-nav.css: 6 + 44 + 6 + its rule), never under it,
+   and Save keeps clear of the assistant's round button (styles.css .co-jv-fab: 48 px, 16 px in) */
+@media (max-width: 640px) {
+  html[data-look="coach"] .co-st-form .co-st-foot { bottom: calc(57px + env(safe-area-inset-bottom, 0px)); padding-bottom: var(--sp-3); padding-right: calc(48px + var(--sp-4)); }
+}
+
+/* ==== Telegram + Instagram (/admin/telegram, /admin/instagram — 12 Nov 2026) ==== */
+/* The bot's "?" opens below a one-row card: the card lets it out. */
+html[data-look="coach"] .co-st-tg .co-st-card:has(.co-st-pop) { overflow: visible; }
+/* A button on a person's row is 36 on a desk; on touch the row gives its padding to the 44 px button. */
+@media not (pointer: coarse) { html[data-look="coach"] .co-st-tg .co-st-row > .co-btn-sm { min-height: 36px; } }
+@media (pointer: coarse) { html[data-look="coach"] .co-st-tg .co-st-line:has(> .co-btn-sm) { padding-top: 0; padding-bottom: 0; } }
+/* A quiet fold on the ground: what is under it, and a chevron that turns. */
+html[data-look="coach"] .co-st-fold {
+  display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 44px; margin: 0 0 var(--sp-2); padding: 0 var(--sp-4); border: 0; border-radius: var(--radius-xs);
+  background: none; color: var(--ink-2); font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+html[data-look="coach"] .co-st-fold svg { color: var(--muted); transition: transform 200ms var(--ease-out); }
+/* Shut folds stack as a short list. */
+html[data-look="coach"] .co-st-fold[aria-expanded="false"] { margin-bottom: 0; }
+html[data-look="coach"] .co-st-grp:has(> .co-st-fold[aria-expanded="false"]) { margin-bottom: var(--sp-2); }
+html[data-look="coach"] .co-st-fold[aria-expanded="true"] svg { transform: rotate(180deg); }
+html[data-look="coach"] .co-st-fold:active { background: var(--st-press); }
+@media (hover: hover) { html[data-look="coach"] .co-st-fold:hover { background: var(--st-hover); color: var(--ink); } }
+html[data-look="coach"] :is(.co-st-fold, .co-st-rem):focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; border-radius: var(--radius-xs); }
+/* A reminder: its name opens it, its button sends it. */
+html[data-look="coach"] .co-st-rem { align-self: stretch; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* One line, an ellipsis, the whole title in its title attribute. */
+html[data-look="coach"] .co-st-1l { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html[data-look="coach"] .co-st-piece { padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+/* The token: hidden, with show/hide inside the box's right edge. */
+html[data-look="coach"] .co-st-pw { position: relative; display: flex; align-items: center; }
+html[data-look="coach"] .co-st-pw .input { flex: 1 1 auto; min-width: 0; padding-right: calc(44px + var(--sp-1)); }
+html[data-look="coach"] .co-st-pw .co-st-ib { position: absolute; right: var(--sp-1); }
+/* Inside these sheets the body already has its gutter. */
+html[data-look="coach"] .co-st-sheet .co-st-field { padding-left: 0; padding-right: 0; }
+html[data-look="coach"] .co-st-sheet :is(.co-st-err, .co-st-ig-who) { margin: 0 0 var(--sp-2); }
+html[data-look="coach"] .co-st-ig-who { color: var(--muted); font-size: var(--fs-sm); line-height: 1.45; }
+html[data-look="coach"] .co-st-sheet .co-st-card + .co-st-field, html[data-look="coach"] .co-st-sheet .co-st-field + .co-st-card { margin-top: var(--sp-2); }
+html[data-look="coach"] .modal-foot .co-st-push { margin-left: auto; }
+html[data-look="coach"] .modal-foot .co-st-n { margin-right: auto; color: var(--muted); font-size: var(--fs-sm); }
+@media (prefers-reduced-motion: reduce) { html[data-look="coach"] .co-st-fold svg { transition: none; } }
+/* The phone's push keeps no transform once it has played (fill "backwards", not "both"): a
+   filled transform makes the page the box of every fixed thing inside it, and the house
+   sheet's backdrop was drawn inside the page instead of over the screen. */
+@media (max-width: 640px) {
+  html[data-look="coach"] .co-st:has(> .co-st-tg, > .co-st-ig) { animation-fill-mode: backwards; }
+  /* The house sheet keeps a desk's 16 px side margins as a max-width and sits on the left edge: edge to edge here. */
+  html[data-look="coach"] .co-st:has(> .co-st-tg, > .co-st-ig) .modal.modal-sheet { max-width: none; }
+}
+/* ==== end Telegram + Instagram ==== */
+/* Pay, continued: the rung sheet sits on the body (a portal), so its footer
+   carries its own touch size; Delete on the left, Save on the right, one row.
+   Under 480 px a rung's amounts go under its band, left-aligned. */
+html[data-look="coach"] .modal-foot .co-st-footl { margin-right: auto; }
+@media (pointer: coarse) { html[data-look="coach"] .modal-foot .co-st-fbtn { min-height: 44px; } }
+@media (max-width: 480px) {
+  html[data-look="coach"] .co-st-rung .co-st-t { flex-basis: 100%; }
+  html[data-look="coach"] .co-st-rung .co-st-amt { justify-items: start; text-align: left; }
+}
+/* Team structure, continued: the push must not stay on the page once it has
+   played — a transform held by `both` makes the page the frame of every fixed
+   layer in it (the whiteboard's role sheet, its full screen). */
+html[data-look="coach"] .co-st:has(> .co-st-wb) { animation-fill-mode: backwards; }
+/* Changes, review: the log that never came — its "Try again" under the sentence, the text on the sentence's x. */
+html[data-look="coach"] .co-st-retry { padding: 0 0 var(--sp-2); }
+/* ==== Telegram + Instagram, review (12 Nov 2026) ====
+   A phone: the announcement box takes the whole line and its button goes
+   under it, at the right; the bot that does not answer reads its error in
+   full and its button goes under it, at the label's x. */
+@media (max-width: 480px) {
+  html[data-look="coach"] .co-st-tg .co-st-cast { flex-wrap: wrap; }
+  html[data-look="coach"] .co-st-tg .co-st-cast .input { flex-basis: 100%; }
+  html[data-look="coach"] .co-st-tg .co-st-cast .co-btn { margin-left: auto; }
+  html[data-look="coach"] .co-st-tg .co-st-row.co-st-line:has(> .co-st-t > small):not(:has(> .co-st-rem)) { flex-wrap: wrap; row-gap: var(--sp-2); padding-top: var(--sp-2); padding-bottom: var(--sp-2); }
+  html[data-look="coach"] .co-st-tg .co-st-line:has(> .co-st-t > small):not(:has(> .co-st-rem)) > .co-st-t { flex-basis: calc(100% - var(--st-tile) - var(--sp-3)); }
+  html[data-look="coach"] .co-st-tg .co-st-line:has(> .co-st-t > small):not(:has(> .co-st-rem)) > .co-btn { margin-left: calc(var(--st-tile) + var(--sp-3)); }
+}
+/* ==== end Telegram + Instagram, review ==== */
+/* Pay and Team structure, review (12 Nov 2026).
+   - At twelve rungs "Add a tier" is aria-disabled (kept in the tab order so its
+     reason is reached): it reads muted and does not answer a hover or a press.
+   - The rung sheet sits on the body (a portal), outside .co-st, so the phone's
+     edge-to-edge sheet is keyed off its form: the house cap
+     (styles.css .modal.modal-sheet, 100vw - 32px) left it 343 of 375, flush left.
+   - Team structure's toolbar: the open board reads in ink, not ruby ("Add role"
+     is the page's one ruby); its icon buttons are 36 on a desk (44 on touch is
+     the house's own), and "Add role" 36 / 44. */
+html[data-look="coach"] .co-st-row[aria-disabled="true"] { cursor: default; color: var(--muted); }
+html[data-look="coach"] .co-st-row[aria-disabled="true"]:is(:hover, :active) { background: none; }
+@media (max-width: 640px) {
+  html[data-look="coach"] .modal.modal-sheet:has(.co-st-rungform) { max-width: none; width: 100%; }
+}
+html[data-look="coach"] .co-st-wb .pill-group .pill.active { color: var(--ink); }
+@media not (pointer: coarse) {
+  html[data-look="coach"] .co-st-wb .pill-group > .icon-btn, html[data-look="coach"] .co-st-wb .zoom-ctl .icon-btn { min-width: 36px; min-height: 36px; }
+  html[data-look="coach"] .co-st-wb .pill-group > .btn-sm { min-height: 36px; }
+}
+@media (pointer: coarse) { html[data-look="coach"] .co-st-wb .pill-group > .btn-sm { min-height: 44px; } }
+/* ---- Channels · Channel, review: on a phone the push keeps no transform once played (as Telegram and
+   Team structure), so "Delete channel"'s sheet and its dim cover the whole screen, not the page column;
+   and the sheet runs edge to edge. A channel's mark carries its flag at the tile's corner, as in the menu. ---- */
+@media (max-width: 640px) {
+  html[data-look="coach"] .co-st:has(> .co-st-form) { animation-fill-mode: backwards; }
+  html[data-look="coach"] .co-st:has(> .co-st-form) .modal.modal-sheet { max-width: none; }
+}
+html[data-look="coach"] .co-st-chrow .co-st-tile .co-mark { margin-right: 0; }
+/* Team structure, refine (12 Nov 2026): every tool on the board is a real target — 36 on a desk, 44 under a
+   finger — the cards' own ones too, not only the toolbar's. */
+html[data-look="coach"] .co-st-wb .icon-btn { min-width: 36px; min-height: 36px; display: inline-grid; place-items: center; }
+@media (pointer: coarse) { html[data-look="coach"] .co-st-wb .icon-btn { min-width: 44px; min-height: 44px; } }

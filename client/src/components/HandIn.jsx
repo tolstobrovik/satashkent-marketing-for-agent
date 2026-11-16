@@ -1,0 +1,474 @@
+import { useEffect, useRef, useState } from 'react'
+import { PanZoom } from './Zoom.jsx'
+import { Scissors, Palette, Clapperboard, ExternalLink, Check, FolderOpen, FileText, Clock, UploadCloud, X, Play, Trash2, RotateCcw } from 'lucide-react'
+import { removeDriveFile, onDriveFilesChanged } from './DriveFiles.jsx'
+import Modal from './Modal.jsx'
+import PravkaNote from './PravkaNote.jsx'
+import PravkaList from './PravkaList.jsx'
+import { api } from '../lib/api.js'
+import { useDriveOn } from '../lib/driveStatus.js'
+import { useChannels } from '../lib/channels.jsx'
+import { deliveryHref } from '../lib/text.js'
+import { toast } from '../lib/toast.js'
+import { rewardFinish } from '../lib/reward.js'
+import { tr as tx } from '../lib/i18n.jsx'
+import { startUpload, cancelUpload, retryUpload, useUploads, sizeLabel } from '../lib/uploads.js'
+import { addLocal, removeLocal, useLocalMedia } from '../lib/demoMedia.js'
+import MediaGrid, { MediaDialog } from './MediaGrid.jsx'
+import { editDue, reviewDue } from '../lib/due.js'
+import { todayISO, tashkentDay } from '../lib/constants.js'
+
+// ---- hand it in --------------------------------------------------------------
+//
+// The whole of an editor's job, as far as this board is concerned, is one
+// sentence: here is the footage, give us back the cut. Doing that used to mean
+// opening a task that holds fourteen fields, finding the second of four tabs,
+// telling apart two identical Drive boxes numbered 1 and 2, pressing a
+// checkbox that sits ABOVE the box it depends on, and then wondering whether
+// "Save changes" still needed pressing.
+//
+// This is that sentence and nothing else: what came in, where the result goes,
+// and one button. It writes exactly what the task window's own button writes —
+// the same milestone, the same link — so the two can never disagree about what
+// "handed in" means. The full task is one link away for anybody who needs the
+// brief, and that is the only other door.
+//
+// `inline` is the same sentence without a window of its own: the Coach look's
+// task window (components/CoachTask.jsx) puts the box and the button straight
+// under "Your step now", so handing in is not a second window on top of the
+// first. Same checks, same write — only the frame, the piece's name (the
+// window already says it) and the timeline notes are left out. `label` renames
+// the button where the window knows a truer word for it ("Shoot is done",
+// "Hand in the fix"); `onReady` tells it whether the button is awake, so it
+// can say why not — and, second, whether the box has anything in it: for a
+// shoot the button is awake with the box empty (the link is optional), and a
+// window that ticked "paste the link" off the button would tick it for nothing.
+
+const JOB = {
+  edit: {
+    seat: 'editor',
+    milestone: 'edited', col: 'ready_link', file: 'ready_file', Icon: Scissors,
+    title: 'Hand in the edit', field: 'Your finished edit', button: 'Hand in the edit',
+    done: 'Edit handed in — the reviewer has it', needsLink: true,
+  },
+  design: {
+    seat: 'designer',
+    milestone: 'designed', col: 'design_link', file: 'design_file', Icon: Palette,
+    title: 'Hand in the artwork', field: 'Your finished artwork', button: 'Hand in the artwork',
+    done: 'Artwork handed in — the reviewer has it', needsLink: true,
+  },
+  shoot: {
+    seat: 'operator',
+    milestone: 'shot', col: 'shot_link', file: 'shot_file', Icon: Clapperboard,
+    title: 'Mark it as filmed', field: 'Where the footage is (optional)', button: 'Mark as filmed',
+    done: 'Marked as filmed — the editor can start', needsLink: false,
+  },
+}
+
+// T-08 (the TZ of 19 October 2026): one box. The drop zone is also a button
+// ("Drop the files here, or press to choose"), a quiet "Paste a link instead"
+// under it, the primary sized to its label and named after who gets the work
+// (the window passes `label`), and the window's own line under it says what
+// happens after the press. The three numbered steps the box used to draw are
+// gone (round 9: no numbered steps).
+export default function HandIn({ item, kind, onDone, onClose, onOpenFull, inline = false, label = '', onReady = null, local = false }) {
+  const job = JOB[kind] || JOB.edit
+  const { byKey } = useChannels()
+  const [team, setTeam] = useState([])
+  useEffect(() => { api.cached('/users').then(setTeam).catch(() => {}) }, [])
+
+  // A channel with one shared Drive folder asks for WHICH file rather than the
+  // whole address: the folder is the same forty times a week, and the file is
+  // the part people leave out. Two channels with two folders have no single
+  // answer, so the box asks for the full link.
+  const folders = [...new Set((item.channels || []).map((k) => (byKey[k]?.drive_url || '').trim()).filter(Boolean))]
+  const folder = folders.length === 1 ? folders[0] : ''
+
+  // Changes asked of this seat: the box starts EMPTY — the file in it is the
+  // one that was sent back — and the round's note sits above it.
+  const fixing = !!item.open_round && item.open_for === job.seat
+  const [round, setRound] = useState(null)
+  useEffect(() => {
+    if (!fixing) return
+    api.get(`/content/${item.id}/revisions`)
+      .then((rs) => setRound([...rs].reverse().find((r) => !r.resolved_at && r.target === job.seat) || null))
+      .catch(() => {})
+  }, [fixing, item.id, job.seat])
+  // Empty for a fix, and for a piece put back after a delivery (ready_at): the
+  // link on it is the version that came back, and one press would send it again.
+  const [value, setValue] = useState(() => (fixing || (kind !== 'shoot' && item.ready_at) ? '' : String(item[job.col] || '').trim()))
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  // ---- or upload it, straight into the task's Drive folder ----
+  // Only once an admin has connected the team's Google Drive. The file goes
+  // from this browser to Google, and the link it lands at fills the box —
+  // so handing in is still the one button below, pressed the same way.
+  // Shown unless the server says Drive is not connected (lib/driveStatus.js):
+  // a status that could not be read never hides it again (31 Oct 2026).
+  const driveOn = useDriveOn()
+  const drive = !local && driveOn !== 'off'
+  // …and with it off, the box says so, so nobody wonders where the upload went.
+  const driveOff = !local && driveOn === 'off' ? <p className="stat-sub hi-off">{tx('Uploading is off until an admin connects Google Drive in Settings → Integrations — paste a link for now.')}</p> : null
+  // The upload belongs to the whole tab (lib/uploads.js), not to this window:
+  // closing the window leaves it running, and it carries on under Uploads.
+  // r11 (the owner): as many videos as the shoot made, each with a preview
+  // before it is sent on. Every file goes to the task's own Drive folder (so
+  // the task window lists them all); the first one's link fills the box the
+  // hand-in writes, as before.
+  const jobs = useUploads()
+  const [files, setFiles] = useState([])   // [{ key, name, url }] — url is the local preview
+  const [watch, setWatch] = useState(null) // the preview pressed: played full screen
+  const [over, setOver] = useState(false)
+  const pick = useRef(null)
+  const alive = useRef(true)
+  // Set on every mount, not only the first: React's development mode mounts
+  // twice, and a ref left false there never heard the upload land.
+  useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
+  // The previews are local copies: let them go when the box goes.
+  useEffect(() => () => files.forEach((f) => f.url && URL.revokeObjectURL(f.url)), []) // eslint-disable-line react-hooks/exhaustive-deps
+  const jobOf = (f) => jobs.find((j) => j.key === f.key) || null
+  const sending = files.some((f) => jobOf(f)?.state === 'sending')
+  const failed = files.find((f) => jobOf(f)?.state === 'failed')
+  useEffect(() => { setErr(failed ? tx(jobOf(failed).error || 'Did not upload') : '') }, [failed?.key]) // eslint-disable-line react-hooks/exhaustive-deps
+  const send = (list) => {
+    const chosen = [...(list || [])].filter(Boolean)
+    if (!chosen.length || busy) return
+    setErr('')
+    const added = chosen.map((file) => ({
+      name: file.name,
+      url: /^(video|image)\//.test(file.type) ? URL.createObjectURL(file) : '',
+      key: startUpload({
+        task: item, kind, file,
+        // Still open when it lands: the first link fills the box.
+        onDone: (out) => { if (alive.current) setValue((v) => v || out.link) },
+      }),
+    }))
+    // The same file dropped twice is one upload (lib/uploads.js hands back the
+    // key it already has): one row here too, and the second preview let go.
+    setFiles((old) => {
+      const fresh = added.filter((a, i) => !old.some((f) => f.key === a.key) && added.findIndex((b) => b.key === a.key) === i)
+      added.filter((a) => !fresh.includes(a)).forEach((a) => a.url && URL.revokeObjectURL(a.url))
+      return [...old, ...fresh]
+    })
+  }
+  // ---- or hand in what is already on the task's Drive ----
+  // A file that came in through the Drive folders (drop-in), or an upload whose
+  // window was closed before it landed, is on the task but in no box here — and
+  // the box, with Drive on, has no link field. So the task's Drive files for
+  // this seat are listed, each with "Use this one" (24 Oct 2026). Footage for
+  // the shoot; the final file or a fix for the edit and the artwork; the task's
+  // own uploads for any of them. The server still says what a hand-in needs.
+  const [onDrive, setOnDrive] = useState([])
+  const [picked, setPicked] = useState(null)
+  const seatFile = (f) => {
+    if (f.state !== 'ok' || (f.source !== 'drop' && f.source !== 'upload')) return false
+    if (f.source === 'drop' && (kind === 'shoot' ? f.kind !== 'footage' : f.kind === 'footage')) return false
+    return kind === 'design' ? !/^video\//.test(f.mime || '') : !/^image\//.test(f.mime || '')
+  }
+  useEffect(() => {
+    if (!drive) return undefined
+    let live = true
+    const load = () => api.get(`/drive/tasks/${item.id}/files`)
+      .then((r) => { if (live) setOnDrive((r.files || []).filter(seatFile)) })
+      .catch(() => { if (live) setOnDrive((item.drive_drops || []).filter((d) => seatFile({ ...d, id: d.file_id, state: 'ok', source: 'drop' })).map((d) => ({ ...d, id: d.file_id }))) })
+    load()
+    const off = onDriveFilesChanged(item.id, load)
+    return () => { live = false; off() }
+  }, [drive, item.id, kind]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [linkOpen, setLinkOpen] = useState(false)
+  // The demo's stand-in for the team's Drive (lib/demoMedia.js): the file is
+  // kept in this browser and plays back in the window; a stand-in link fills
+  // the box, so the hand-in is the same press as on the real board.
+  const LOCAL_KIND = { shoot: 'footage', edit: 'edit', design: 'cover' }
+  // What was dropped here before, kept in this browser: the same even grid as the window's material.
+  const kept = useLocalMedia(local ? item.id : null).filter((x) => x.kind === (LOCAL_KIND[kind] || 'edit'))
+  const takeLocal = async (list) => {
+    const chosen = [...(list || [])].filter(Boolean)
+    if (!chosen.length || busy) return
+    setErr('')
+    try {
+      await addLocal(item.id, LOCAL_KIND[kind] || 'edit', chosen)
+      setValue((v) => v || `https://drive.google.com/drive/folders/demo-${item.id}-${LOCAL_KIND[kind] || 'edit'}`)
+    } catch (e) { setErr(e.message) }
+  }
+  const gb = sizeLabel
+  // Delete one: an uploaded file goes to the Drive's bin (asked first); one
+  // that never landed just leaves the list. The box keeps the first link of
+  // what is still there.
+  const drop = async (f) => {
+    const j = jobOf(f)
+    if (j?.state === 'done' && j.fileId && !(await removeDriveFile(item.id, { id: j.fileId, name: j.fileName || f.name }))) return
+    if (f.url) URL.revokeObjectURL(f.url)
+    const rest = files.filter((x) => x.key !== f.key)
+    setFiles(rest)
+    if (j?.link && value === j.link) setValue(rest.map((x) => jobOf(x)).find((x) => x?.state === 'done')?.link || '')
+  }
+
+  const isLink = /^https?:\/\//i.test(value.trim())
+  const filled = value.trim().length > 0
+  // A change asked of this seat needs the new version — the footage too, which
+  // is otherwise optional (the bug hunt, 14 Oct 2026: a re-shoot "sent" nothing).
+  const ready = job.needsLink || fixing ? filled && (isLink || !!folder) : true
+  useEffect(() => { onReady?.(ready, filled) }, [ready, filled]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // What came IN — the thing the editor works from. For a cut that is the
+  // footage and whoever shot it; for artwork and for a shoot there is no
+  // upstream file on this board, so nothing is drawn rather than an empty box.
+  const operator = team.find((u) => u.id === item.operator_id)
+  const footage = kind === 'edit' ? deliveryHref(item.shot_link) : null
+
+  const submit = async () => {
+    if (!ready || busy || sending) return
+    setBusy(true); setErr('')
+    const v = value.trim()
+    const body = { milestone: job.milestone }
+    if (v) {
+      if (isLink) body[job.col] = v
+      else if (folder) body[job.file] = v
+    }
+    try {
+      const updated = await api.patch(`/content/${item.id}`, body)
+      rewardFinish()
+      // A reel's cover handed in before its cut is held on Editing: said so.
+      toast(updated?.held?.includes('ready_link') ? tx('Artwork handed in — it waits for the edit') : tx(job.done))
+      onDone?.(updated)
+      onClose?.()
+    } catch (e) {
+      setErr(e.message)
+    } finally { setBusy(false) }
+  }
+
+  const { Icon } = job
+  const body = (
+      <div className={'hi' + (inline ? ' hi-inline' : '')}>
+        {!inline && (
+          <div className="hi-piece">
+            <Icon size={16} />
+            <div>
+              <b>{item.title}</b>
+              <span className="stat-sub">{(item.channels || []).map((k) => byKey[k]?.label || k).join(' · ')}</span>
+            </div>
+          </div>
+        )}
+
+        {round && (
+          <div className="hi-round">
+            <b>{tx('{name} asked for changes', { name: (round.requested_name || '').split(' ')[0] || tx('The team') })}</b>
+            <PravkaNote text={round.note} className="hi-round-note" />
+            <PravkaList taskId={item.id} round={round} canTick />
+            <span className="stat-sub">{tx('Round {n} · to fix', { n: round.round })} · {tashkentDay(round.created_at)}</span>
+          </div>
+        )}
+
+        {/* The booked half-hours this shoot holds. Marking it filmed is what
+            ticks the slot off on their timeline — nothing else to press. Said
+            only for today's: the timeline on their page is today, and an
+            overdue shoot promised a tick nobody would ever see. */}
+        {!inline && kind === 'shoot' && item.recording_time && item.recording_date === todayISO() && (
+          <div className="hi-slot">
+            <Clock size={14} />
+            <span><b>{item.recording_time.slice(0, 5)}{item.recording_end ? `–${item.recording_end.slice(0, 5)}` : ''}</b> · {tx('ticked off on your timeline when you mark it filmed')}</span>
+          </div>
+        )}
+        {/* A cut or artwork owed today sits under the same timeline, with no
+            hour. Handing it in here is what ticks it off there. */}
+        {!inline && kind !== 'shoot' && ((kind === 'edit' ? editDue(item) : item.design_ready_date) || reviewDue(item)) === todayISO() && (
+          <div className="hi-slot">
+            <Clock size={14} />
+            <span><b>{tx('Today')}</b> · {tx('ticked off on your timeline when you hand it in')}</span>
+          </div>
+        )}
+
+        {kind === 'edit' && !local && (
+          <div className={'hi-source' + (footage ? '' : ' hi-source-missing')}>
+            <Clapperboard size={14} />
+            {footage ? (
+              <>
+                <span>{operator ? tx('Footage from {name}', { name: operator.name.split(' ')[0] }) : tx('The footage')}</span>
+                <a className="btn btn-sm" href={footage} target="_blank" rel="noreferrer">
+                  <ExternalLink size={13} /> {tx('Open')}
+                </a>
+              </>
+            ) : (
+              <span>
+                {operator
+                  ? tx('{name} has not added a footage link yet — ask them, or check the channel folder.', { name: operator.name.split(' ')[0] })
+                  : tx('No footage link on this task yet.')}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* r10 (the October survey: editors should upload the video on the
+            platform itself, not through Drive). With the team's Drive
+            connected, the file is dropped here first — it goes to the task's
+            folder by itself and its link fills the box — and pasting a link
+            is the fallback, folded below. */}
+        {local && (
+          <>
+            <div className={'hi-drop hi-drop-big' + (over ? ' over' : '')} role="button" tabIndex={0} aria-label={tx(kind === 'shoot' ? 'Upload footage' : kind === 'design' ? 'Upload cover' : fixing ? 'Upload the new version' : 'Upload edit')}
+              onClick={() => pick.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick.current?.click() } }}
+              onDragOver={(e) => { e.preventDefault(); setOver(true) }}
+              onDragLeave={() => setOver(false)}
+              onDrop={(e) => { e.preventDefault(); setOver(false); takeLocal(e.dataTransfer.files) }}>
+              <span className={'hi-drop-ic hi-drop-ic-' + kind} aria-hidden="true">{kind === 'shoot' ? <Clapperboard size={28} /> : kind === 'design' ? <Palette size={28} /> : <Scissors size={28} />}</span>
+              <span className="hi-drop-t"><b>{tx(kind === 'shoot' ? 'Upload footage' : kind === 'design' ? 'Upload cover' : fixing ? 'Upload the new version' : 'Upload edit')}</b><small>{tx('Drop the files here, or press to choose')}</small></span>
+              <input ref={pick} type="file" hidden multiple accept={kind === 'design' ? 'image/*,application/pdf' : 'video/*'} onChange={(e) => { takeLocal(e.target.files); e.target.value = '' }} />
+            </div>
+            {kept.length > 0 && <div className="tw-kept"><MediaGrid files={kept} onRemove={(x) => removeLocal(x.id)} /></div>}
+          </>
+        )}
+        {drive && (
+          <>
+            <div className={'hi-drop' + (files.length ? '' : ' hi-drop-big') + (over ? ' over' : '')} role="button" tabIndex={0} aria-label={tx('Upload to Google Drive')}
+              onClick={() => pick.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick.current?.click() } }}
+              onDragOver={(e) => { e.preventDefault(); setOver(true) }}
+              onDragLeave={() => setOver(false)}
+              onDrop={(e) => { e.preventDefault(); setOver(false); send(e.dataTransfer.files) }}>
+              {/* Round 14 (the owner, 16 Oct: "instead of posting a link, just give a
+                  container with an uploader"): the box says what to drop and where it goes. */}
+              <span className="hi-drop-ic" aria-hidden="true"><UploadCloud size={files.length ? 18 : 20} /></span>
+              <span className="hi-drop-t">
+                <b>{files.length ? tx('Add more') : fixing ? tx('Drop the new version here, or press to choose') : tx('Drop the files here, or press to choose')}</b>
+                {!files.length && <small>{kind === 'design' ? tx('The artwork goes straight into the piece’s Drive folder.') : kind === 'shoot' ? tx('Every video from the shoot goes straight into the piece’s Drive folder.') : tx('The finished edit goes straight into the piece’s Drive folder.')}</small>}
+              </span>
+              <input ref={pick} type="file" hidden multiple accept={kind === 'design' ? 'image/*,application/pdf' : 'video/*'} onChange={(e) => { send(e.target.files); e.target.value = '' }} />
+            </div>
+            {/* The preview: every file chosen, playable here before it is sent on. */}
+            {files.length > 0 && (
+              <div className="hi-previews" aria-live="polite">
+                {files.map((f) => {
+                  const j = jobOf(f)
+                  const pct = j ? Math.min(100, Math.floor((j.sent / Math.max(1, j.size)) * 100)) : 0
+                  return (
+                    <div key={f.key} className={'hi-prev' + (j?.state === 'failed' ? ' failed' : '')}>
+                      {f.url ? (
+                        <button type="button" className="hi-prev-open" onClick={() => setWatch(f)} aria-label={`${kind === 'design' ? tx('View') : tx('Play')}: ${f.name}`}>
+                          {kind !== 'design' ? <video src={f.url} muted playsInline preload="metadata" aria-hidden="true" tabIndex={-1} /> : <img src={f.url} alt="" />}
+                          {kind !== 'design' && <span className="co-dfile-play"><Play size={18} aria-hidden="true" /></span>}
+                        </button>
+                      ) : <span className="hi-prev-none"><FileText size={22} aria-hidden="true" /></span>}
+                      <span className="hi-prev-n" title={f.name}>{f.name}</span>
+                      {j?.state === 'sending' ? (
+                        <span className="hi-prev-up">
+                          <span className="hi-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{ width: `${pct}%` }} /></span>
+                          <button type="button" className="icon-btn" onClick={() => cancelUpload(f.key)} aria-label={tx('Cancel the upload')}><X size={13} aria-hidden="true" /></button>
+                        </span>
+                      ) : (
+                        <span className="hi-prev-up">
+                          {j?.state === 'done' ? <span className="hi-prev-ok"><Check size={13} aria-hidden="true" />{tx('On Drive')} · {gb(j.size)}</span>
+                            : <span className="hi-prev-bad">{tx('Not sent')}</span>}
+                          {/* Failed: the same upload again, from where Google stopped (24 Oct 2026). */}
+                          {j?.state === 'failed' && j.file && (
+                            <button type="button" className="icon-btn" onClick={() => { setErr(''); retryUpload(f.key) }} aria-label={tx('Try again')} title={tx('Try again')}><RotateCcw size={14} aria-hidden="true" /></button>
+                          )}
+                          <button type="button" className="icon-btn hi-prev-del" onClick={() => drop(f)} disabled={busy} aria-label={`${tx('Delete')}: ${f.name}`} title={tx('Delete')}><Trash2 size={14} aria-hidden="true" /></button>
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {watch && (
+              <MediaDialog name={watch.name} onClose={() => setWatch(null)}>
+                {kind !== 'design' ? <video src={watch.url} controls autoPlay playsInline aria-label={watch.name} /> : <PanZoom src={watch.url} alt={watch.name} />}
+                <p className="co-player-name">{watch.name}</p>
+              </MediaDialog>
+            )}
+          </>
+        )}
+
+        {(() => {
+          const field = (
+            <label className="hi-field">
+              <span className="hi-label">{fixing && kind === 'shoot' ? tx('Where the new footage is') : tx(job.field)}</span>
+              <input className="input" autoFocus={!inline && !drive} value={value} disabled={busy || sending}
+                placeholder={folder ? tx('Drive link, or just the file name — e.g. reel 14') : 'https://drive.google.com/…'}
+                onChange={(e) => { setValue(e.target.value); setErr('') }}
+                onKeyDown={(e) => { if (e.key === 'Enter') submit() }} />
+              {folder && (
+                <a className="hi-folder" href={folder} target="_blank" rel="noreferrer">
+                  <FolderOpen size={13} /> {tx('Open the channel folder')}
+                </a>
+              )}
+            </label>
+          )
+          // Round 14: with the team's Drive connected the file is dropped, never
+          // linked (the owner, 16 Oct). A link box is only for a board without
+          // Drive — or, with Drive, one quiet press away under the box, "Paste a
+          // link instead" (T-08; 24 Oct 2026: a file somebody else uploaded had
+          // no way in at all).
+          // The demo: a thin, half-visible link field under the drop zone (the owner, 9 Nov 2026) — a placeholder, not a button.
+          if (local) {
+            const standIn = /^https:\/\/drive\.google\.com\/drive\/folders\/demo-/.test(value)
+            return <input className="input tw-link" value={standIn ? '' : value} disabled={busy} placeholder="https://drive.google.com/…" aria-label={tx(job.field)}
+              onChange={(e) => { setValue(e.target.value); setErr('') }} onKeyDown={(e) => { if (e.key === 'Enter') submit() }} />
+          }
+          if (!drive) return <>{driveOff}{field}</>
+          const mine = jobs.some((j) => j.link && j.link === value)
+          const chosen = !!picked && value === picked.link
+          return (
+            <>
+              {!filled && onDrive.length > 0 && (
+                <div className="hi-field">
+                  <span className="hi-label">{tx('Already on the task’s Drive')}</span>
+                  {onDrive.map((f) => (
+                    <div key={f.id} className="hi-source">
+                      <FileText size={14} aria-hidden="true" />
+                      <span>{f.name}{f.size ? ` · ${gb(f.size)}` : ''}</span>
+                      <button type="button" className="btn btn-sm" onClick={() => { setPicked(f); setValue(f.link); setErr('') }}
+                        title={tx('After you press: this file is the one handed in when you press the button below')}>
+                        <Check size={13} aria-hidden="true" /> {tx('Use this one')}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {chosen && (
+                <div className="hi-source">
+                  <Check size={14} aria-hidden="true" />
+                  <span>{tx('Handing in: {name}', { name: picked.name })}</span>
+                  <button type="button" className="btn btn-sm" onClick={() => { setPicked(null); setValue('') }}>{tx('Change')}</button>
+                </div>
+              )}
+              {!chosen && !mine && !linkOpen && (
+                <button type="button" className="co-link hi-link-instead" onClick={() => setLinkOpen(true)}>{tx('Paste a link instead')}</button>
+              )}
+              {!chosen && linkOpen && field}
+            </>
+          )
+        })()}
+
+        {err && <div className="form-error" role="alert">{err}</div>}
+
+        {/* T-04: in the window the button appears when it can be pressed; the
+            window's own line above it says what is still missing. The sheet
+            (not inline) keeps a sleeping button, since it has no such line. */}
+        {(!inline || ready || busy || sending) && (
+          <button type="button" className={inline ? 'co-btn co-btn-p hi-go' : 'btn btn-primary hi-go'} disabled={!ready || busy || sending} onClick={submit}>
+            {!inline && <Check size={16} />} {busy ? tx('Handing in…') : sending ? tx('Uploading…') : label || tx(job.button)}
+          </button>
+        )}
+
+        {onOpenFull && !inline && (
+          <button type="button" className="hi-full" onClick={() => { onClose?.(); onOpenFull(item) }}>
+            <FileText size={13} /> {tx('Read the brief')}
+          </button>
+        )}
+      </div>
+  )
+  if (inline) return body
+  return (
+    <Modal title={tx(job.title)} onClose={busy ? () => {} : () => {
+      // An upload in flight carries on after this closes (lib/uploads.js).
+      if (sending) toast(tx('Still uploading — follow it under Uploads'))
+      onClose?.()
+    }}>
+      {body}
+    </Modal>
+  )
+}

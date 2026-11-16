@@ -1,0 +1,100 @@
+# The gate that catches two people editing the same rule from opposite ends.
+#
+# Two of us worked this branch on the same day from different machines: one
+# turned the handover gates into walls, the other into advice, and neither
+# found out until somebody read the diff by hand hours later. A red X on the
+# push that caused it is worth more than any amount of care afterwards.
+#
+# API-level suites, plus one group that reads the screens in a browser. They run as six groups on six runners at
+# once (qa/ci.sh lists what is in each), so the whole gate takes as long as
+# its slowest group — about a minute and a half — rather than the sum.
+name: checks
+
+# Every push, on every branch — which already covers pull requests, because a
+# check run attaches to the commit and a pull request shows the checks for its
+# head commit. Listing `pull_request` as well fired both triggers for a branch
+# with a PR open and ran the whole job twice over the same commit.
+#
+# A concurrency group cannot fix that on its own: for a push the group resolves
+# to refs/heads/<branch> and for a pull_request to <branch>, so the two runs
+# never share a group and neither cancels the other. Dropping the second
+# trigger is what actually stops the duplicate. The group still earns its keep
+# for successive pushes to the same branch — the only answer worth waiting for
+# is the one about the newest commit.
+#
+# The trade: a pull request reopened with no new push does not re-run by
+# itself, and this does not test the branch merged into main. Both are fine
+# here — nobody works from a fork.
+# `appdata` is excluded, and that exclusion is load-bearing rather than tidy.
+# It is not a branch anybody develops on: it is the DATABASE. The running app
+# commits to it on every write, so `'**'` pointed this whole job at the data.
+# The result was a run per saved task — hundreds of them, each one either
+# failing (the data branch carries whatever source tree main had when the
+# branch was last created, not this one) or cancelled seconds later by the
+# next write's run through `cancel-in-progress`. A wall of red X's that said
+# nothing about any code anybody wrote, and which buried the one real failure
+# on main underneath it.
+#
+# WHEN THIS TAKES EFFECT, which is not immediately. For a push, GitHub reads
+# the workflow file from the ref being PUSHED — so what governs a write to
+# `appdata` is the copy of this file on `appdata`, not the one on main. That
+# copy is not edited by hand: ghstore.js creates the data branch from the
+# default branch (`ensureBranch`) on the very first boot, and the nightly
+# squash (`squash`) rewrites it as one commit holding nothing but the
+# database — so after the first squash there is no workflow file on `appdata`
+# at all, and nothing for a data write to run. Until then the noisy runs
+# continue, and they are harmless. Worth knowing before editing here: this
+# exclusion cannot be tested by pushing to `appdata`.
+on:
+  push:
+    branches:
+      - '**'
+      - '!appdata'
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suites:
+    name: suites (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    # The browser group reads thirty-odd screens in a browser twice over (axe,
+    # then the two languages) after the demo data is made through the API —
+    # which alone took fourteen minutes on 23 Oct 2026. The others stay short.
+    timeout-minutes: ${{ matrix.group == 'browser' && 30 || 8 }}
+    strategy:
+      # One red group is enough to stop a deploy; the others still finish,
+      # so a run says everything that is wrong at once.
+      fail-fast: false
+      matrix:
+        group: [client, api, storage, driver, integrations, browser]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # Only the browser group reads screens; the others never download a browser.
+      - name: Chromium for Playwright
+        if: matrix.group == 'browser'
+        run: npx playwright install --with-deps chromium
+
+      - name: Suites — ${{ matrix.group }}
+        run: bash qa/ci.sh ${{ matrix.group }}
+
+      # The kit (/kit), photographed by brand-suite in the browser group (Q-04):
+      # the reference a change is read against, on a desk and on a phone.
+      - name: Upload the kit's photographs
+        if: always() && matrix.group == 'browser'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kit-screens
+          path: qa/kit-*.png
+          if-no-files-found: ignore
+          retention-days: 14

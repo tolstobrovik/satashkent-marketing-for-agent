@@ -1,0 +1,55 @@
+/* My Day round 1 (myday-tz §2.1.3) — the maker's page, CoachMakerDay.jsx.
+   The shared row, heads, "Show all" and the start-here card are the
+   "My Day round 1 (myday-tz) — shared" section of styles.css; this file adds
+   only what the maker's page has of its own: the subs of Fixes, the carried
+   pieces' month rule and the quiet line of an empty day. Every rule is under
+   html[data-look="coach"] .co-myday so it wins by specificity, never by the
+   order the files load in. Tokens only; 4/8/16/24. */
+
+/* ---- Fixes: "Check it" and "Being fixed", each a small head over its rows ----
+   An h3 under the group's h2, on the card's one left x (16). */
+html[data-look="coach"] .co-myday .co-mkday .co-mk-sub { min-width: 0; }
+html[data-look="coach"] .co-myday .co-mkday .co-mk-sub + .co-mk-sub { margin-top: var(--sp-2); }
+html[data-look="coach"] .co-myday .co-mkday h3.co-mk-sub-h {
+  display: flex; align-items: center; min-height: 32px; margin: 0; padding: 0 var(--sp-4);
+  font: 600 var(--fs-sm)/1.3 var(--font); letter-spacing: 0; text-transform: none; color: var(--ink-2);
+}
+
+/* ---- carried over (A1): the month's colour is the rule on each row's left ----
+   The heading names the month in words; the rule is the month's colour, as
+   MonthTag wears it; a row from another month than the heading's also
+   carries the month's word, small, at the start of its grey line. */
+html[data-look="coach"] .co-myday .co-mkday ul.co-rows > li.co-row.co-mk-old { box-shadow: inset 4px 0 var(--month-prev-line); }
+html[data-look="coach"] .co-myday .co-mkday ul.co-rows > li.co-row.co-mk-old.co-mk-m-old { box-shadow: inset 4px 0 var(--hairline-strong); }
+html[data-look="coach"] .co-myday .co-mkday ul.co-rows > li.co-row > .co-row-b > .co-row-f > .co-month {
+  display: inline; padding: 0 var(--sp-1); border-radius: var(--radius-xs); font: 600 var(--fs-xs)/1.4 var(--font);
+}
+/* An older month's word at 12 px: the muted ink is 4.3:1 on its grey at night; the second ink keeps it over 4.5. */
+html[data-look="coach"] .co-myday .co-mkday ul.co-rows > li.co-row > .co-row-b > .co-row-f > .co-month.co-month-old { color: var(--ink-2); }
+
+/* ---- a day with nothing on it: one quiet line, on the page's left x ---- */
+html[data-look="coach"] .co-myday .co-mkday > p.co-mk-none { margin: 0; padding: 0 var(--sp-4); font-size: var(--fs-sm); color: var(--muted); }
+
+/* ---- the card's preview: nothing drawn, no room taken ---- */
+html[data-look="coach"] .co-myday .co-mkday .co-here-prev:empty { display: none; }
+
+/* ---- one left x (§2.6): every title in a list starts on the same x ----
+   A row's line of stops is 3, 4 or 5 stops long, so with each row sizing its
+   own columns the titles started at different x (498 / 530 at 1440). On a
+   desk the list owns the three columns and each row takes them as a subgrid:
+   the stops' column is as wide as the longest line of stops in that list.
+   At 700 and under the stops are a line above the title (the shared row). */
+@media (min-width: 701px) {
+  html[data-look="coach"] .co-myday .co-mkday ul.co-rows { grid-template-columns: auto minmax(0, 1fr) auto; }
+  html[data-look="coach"] .co-myday .co-mkday ul.co-rows > li.co-row { grid-column: 1 / -1; grid-template-columns: subgrid; grid-template-areas: "tl b r"; }
+}
+
+/* ---- on a phone the grey line may take two lines ----
+   It carries the verb there ("Your step: Send to the shoot · goes out Mon
+   16 Nov", R30), and one line cut the day off at 375 and 320 (myday-tz
+   §2.1.3's phone wireframe wraps it). */
+@media (max-width: 700px) {
+  html[data-look="coach"] .co-myday .co-mkday ul.co-rows > li.co-row > .co-row-b > .co-row-f {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; text-overflow: clip;
+  }
+}
