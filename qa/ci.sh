@@ -94,12 +94,12 @@ case "${1:-}" in
   # `npx playwright install` in the workflow; nothing here is heavy for the
   # server, because none of it runs there.
   browser)
+    # the demo team signs in with 1234 (scripts/demo-data.mjs gives the admin that password too)
+    export DEMO_PASSWORD=1234
     npm run build
     export DATA_DIR="$TMP/data-browser"
     mkdir -p "$DATA_DIR"
     node server/seed.js
-    # the demo team signs in with 1234 (scripts/demo-data.mjs), the admin too
-    export DEMO_PASSWORD=1234 ADMIN_PASSWORD=1234
     PORT=4095 node server/index.js > "$TMP/browser-api.log" 2>&1 &
     api=$!
     trap 'kill $api 2>/dev/null || true' EXIT
